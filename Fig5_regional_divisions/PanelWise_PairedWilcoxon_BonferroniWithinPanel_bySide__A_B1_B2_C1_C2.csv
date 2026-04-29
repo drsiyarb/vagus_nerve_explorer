@@ -1,0 +1,21 @@
+Side,PanelCode,PanelName,GroupA,GroupB,n_paired,tested,reason,p_raw,p_bonf_panel,m_panel,sig
+Left,A,Pharyngeal Arch Targets / Primitive Mediastinum Targets,Pharyngeal Arch Targets,Primitive Mediastinum Targets,28,True,,7.450580596923828e-09,7.450580596923828e-09,1.0,True
+Right,A,Pharyngeal Arch Targets / Primitive Mediastinum Targets,Pharyngeal Arch Targets,Primitive Mediastinum Targets,28,True,,7.450580596923828e-09,7.450580596923828e-09,1.0,True
+Left,B1,Muscular,Upper Cervical,Lower Cervical,9,True,,0.00390625,0.0078125,2.0,True
+Left,B1,Muscular,Lower Cervical,Upper Thoracic,9,True,,0.00390625,0.0078125,2.0,True
+Right,B1,Muscular,Upper Cervical,Lower Cervical,11,True,,0.0048828125,0.009765625,2.0,True
+Right,B1,Muscular,Lower Cervical,Upper Thoracic,12,True,,0.001953125,0.00390625,2.0,True
+Left,B2,Vascular,Upper Cervical,Lower Cervical,5,False,n_paired<6,,,1.0,False
+Left,B2,Vascular,Lower Cervical,Upper Thoracic,11,True,,0.0009765625,0.0009765625,1.0,True
+Right,B2,Vascular,Upper Cervical,Lower Cervical,7,True,,0.015625,0.015625,1.0,True
+Right,B2,Vascular,Lower Cervical,Upper Thoracic,0,False,n_paired<6,,,1.0,False
+Left,C1,Thoracic,Cardiac,Cardiopulmonary,20,True,,8.20159912109375e-05,0.0002460479736328125,3.0,True
+Left,C1,Thoracic,Cardiopulmonary,Pulmonary,16,True,,3.0517578125e-05,9.1552734375e-05,3.0,True
+Left,C1,Thoracic,Pulmonary,Esophageal (core),16,True,,0.03863525390625,0.11590576171875,3.0,False
+Right,C1,Thoracic,Cardiac,Cardiopulmonary,11,True,,0.0009765625,0.0029296875,3.0,True
+Right,C1,Thoracic,Cardiopulmonary,Pulmonary,20,True,,1.9073486328125e-06,5.7220458984375e-06,3.0,True
+Right,C1,Thoracic,Pulmonary,Esophageal (core),19,True,,0.002838134765625,0.008514404296875,3.0,True
+Left,C2,Cardiac subtypes,Superficial cardiac plexus,Cardiopulmonary,18,True,,7.62939453125e-06,7.62939453125e-06,1.0,True
+Left,C2,Cardiac subtypes,Deep cardiac plexus,Cardiopulmonary,5,False,n_paired<6,,,1.0,False
+Right,C2,Cardiac subtypes,Superficial cardiac plexus,Cardiopulmonary,6,True,,0.03125,0.0625,2.0,False
+Right,C2,Cardiac subtypes,Deep cardiac plexus,Cardiopulmonary,7,True,,0.015625,0.03125,2.0,True

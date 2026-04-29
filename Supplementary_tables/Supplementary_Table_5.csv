@@ -1,0 +1,6 @@
+Group,n (T),"Mean (T), cm","Range (T), cm",n (L),"Mean (L), cm","Range (L), cm",n (R),"Mean (R), cm","Range (R), cm","Δmean (L–R), cm"
+Pooled Pulmonary-derived,654,23.47,1.60–32.68,233,25.58,19.01–32.68,421,22.29,1.60–32.62,3.29
+Pulmonary (Pulmonary group),239,25.36,17.73–32.68,110,26.48,19.93–32.68,129,24.4,17.73–31.84,2.08
+Cardiopulmonary (Cardiac group),293,20.73,1.60–31.34,76,23.74,19.01–27.68,217,19.67,1.60–31.34,4.07
+Pulmonary (from Esophageal Plexus),99,26.6,22.65–32.62,34,26.38,23.68–30.69,65,26.71,22.65–32.62,-0.33
+Cardiopulmonary (from Esophageal Plexus),23,25.28,19.59–31.95,13,26.72,22.30–31.95,10,23.4,19.59–31.32,3.32

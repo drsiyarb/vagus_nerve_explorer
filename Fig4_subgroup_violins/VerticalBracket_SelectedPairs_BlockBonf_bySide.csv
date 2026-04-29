@@ -1,0 +1,13 @@
+Side,Block,PairName,tested,n_paired,p_raw,A_anchor,B_anchor,d_B_minus_A,p_bonf_block,m_block,sig
+Left,Sympathetic,SCG vs Trunk,False,0,,superior cervical ganglion,Sympathetic trunk,,,0.0,False
+Left,Muscular,SLN vs Pharyngeal,True,17,0.002260111658423303,Laryngeal (SLN),Pharyngeal,-0.9539045092871618,0.004520223316846606,2.0,True
+Left,Muscular,Pharyngeal vs RLN,True,17,1.52587890625e-05,Pharyngeal,Laryngeal (RLN),12.794796867294808,3.0517578125e-05,2.0,True
+Left,Vascular,ICA vs Common Carotid,False,0,,Internal Carotid artery,Common Carotid,,,1.0,False
+Left,Vascular,Common Carotid vs (Aorta+Unspec),True,8,0.0078125,Common Carotid,Aorta,2.2831619290047533,0.0078125,1.0,True
+Left,Cardiac,(Pooled plexus) vs Cardiopulmonary,False,0,,Superficial cardiac plexus,Cardiopulmonary,,,0.0,False
+Right,Sympathetic,SCG vs Trunk,False,0,,superior cervical ganglion,Sympathetic trunk,,,0.0,False
+Right,Muscular,SLN vs Pharyngeal,True,19,0.06628799438476562,Laryngeal (SLN),Pharyngeal,-0.743599943907501,0.13257598876953125,2.0,False
+Right,Muscular,Pharyngeal vs RLN,True,19,3.814697265625e-06,Pharyngeal,Laryngeal (RLN),8.790065074742602,7.62939453125e-06,2.0,True
+Right,Vascular,ICA vs Common Carotid,False,0,,Internal Carotid artery,Common Carotid,,,0.0,False
+Right,Vascular,Common Carotid vs (Aorta+Unspec),False,0,,Common Carotid,Aorta,,,0.0,False
+Right,Cardiac,(Pooled plexus) vs Cardiopulmonary,False,0,,Superficial cardiac plexus,Cardiopulmonary,,,0.0,False
