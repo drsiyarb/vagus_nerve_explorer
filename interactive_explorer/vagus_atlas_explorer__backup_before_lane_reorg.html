@@ -1,0 +1,3444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vagus Atlas Explorer</title>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js" charset="utf-8"></script>
+<script src="vagus_atlas_data.js"></script>
+<style>
+  /* ==========================================================
+     RESET + TYPOGRAPHY
+     ========================================================== */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: Inter, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    background: #f7f7f7;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; font-size: inherit; color: inherit; }
+
+  /* ==========================================================
+     APP GRID
+     ========================================================== */
+  #app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 240px 1fr;
+    grid-template-areas:
+      "header  header"
+      "sidebar main"
+      "footer  footer";
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ==========================================================
+     HEADER
+     ========================================================== */
+  header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    background: #fff;
+    border-bottom: 1px solid #e6e6e6;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header .subtitle {
+    font-size: 12px;
+    color: #777;
+    font-weight: 400;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #f5f5f5;
+    border: 1px solid #e7e7e7;
+    color: #444;
+    white-space: nowrap;
+  }
+  .badge.dataset { background: #f0f7ff; border-color: #d6e8ff; color: #1a5ea8; }
+  header .spacer { flex: 1; }
+  header .header-link {
+    font-size: 12px;
+    color: #555;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+  }
+  header .header-link:hover { background: #fafafa; }
+
+  /* ==========================================================
+     SIDEBAR
+     ========================================================== */
+  aside.sidebar {
+    grid-area: sidebar;
+    background: #fafafa;
+    border-right: 1px solid #ececec;
+    overflow-y: auto;
+    padding: 16px 14px 24px 14px;
+  }
+  .side-section { margin-bottom: 20px; }
+  .side-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+  }
+
+  .toggle-row {
+    display: flex;
+    background: #fff;
+    border: 1px solid #e2e2e2;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .toggle-row .toggle-btn {
+    flex: 1;
+    padding: 6px 0;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    transition: background 0.12s, color 0.12s;
+  }
+  .toggle-row .toggle-btn:hover:not(.active) { background: #f1f1f1; }
+  .toggle-row .toggle-btn.active {
+    background: #111;
+    color: #fff;
+  }
+
+  .panel-nav { display: flex; flex-direction: column; gap: 4px; }
+  .panel-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    cursor: pointer;
+    color: #444;
+    font-size: 12.5px;
+    border: 1px solid transparent;
+    background: transparent;
+    text-align: left;
+  }
+  .panel-nav .nav-item:hover:not(.active):not(.disabled) { background: #f0f0f0; }
+  .panel-nav .nav-item.active {
+    background: #fff;
+    border-color: #d8d8d8;
+    color: #111;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .panel-nav .nav-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .panel-nav .nav-item .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ddd;
+    flex-shrink: 0;
+  }
+  .panel-nav .nav-item.active .nav-dot { background: #111; }
+
+  /* ==========================================================
+     MAIN CONTENT
+     ========================================================== */
+  main {
+    grid-area: main;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    background: #f7f7f7;
+  }
+
+  /* ----- Filter bar ----- */
+  .filter-bar {
+    background: #fff;
+    border-bottom: 1px solid #ececec;
+    padding: 10px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    padding: 5px 8px;
+  }
+  .filter-group .filter-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    margin-right: 2px;
+  }
+  .chip {
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    color: #444;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    white-space: nowrap;
+  }
+  .chip:hover:not(.active) { background: #f3f3f3; }
+  .chip.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+  .chip.sg-chip {
+    border-left-width: 4px;
+  }
+  .chip.sg-chip.active {
+    background: var(--sg-color);
+    border-color: var(--sg-color);
+    color: #fff;
+  }
+  .chip.sg-chip:not(.active) {
+    border-left-color: var(--sg-color);
+  }
+
+  .filter-group select {
+    font: inherit;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  .reset-btn {
+    margin-left: auto;
+    font-size: 11.5px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #555;
+    cursor: pointer;
+  }
+  .reset-btn:hover { background: #fafafa; color: #111; }
+
+  /* ----- Panel area ----- */
+  .panel-area {
+    overflow: auto;
+    padding: 14px 16px;
+  }
+  .panel {
+    display: none;
+    height: 100%;
+  }
+  .panel.active { display: block; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fcfcfc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .card-header .card-meta {
+    font-size: 11.5px;
+    color: #888;
+  }
+  .card-body {
+    flex: 1;
+    padding: 16px;
+    overflow: auto;
+  }
+  .figure-placeholder {
+    height: 100%;
+    min-height: 360px;
+    border: 1.5px dashed #d8d8d8;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #999;
+    font-size: 12.5px;
+    background: #fbfbfb;
+  }
+  .figure-placeholder .ph-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+  }
+  .figure-placeholder .ph-detail {
+    font-size: 11.5px;
+    color: #aaa;
+    max-width: 460px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ==========================================================
+     FOOTER
+     ========================================================== */
+  footer {
+    grid-area: footer;
+    background: #fff;
+    border-top: 1px solid #ececec;
+    padding: 8px 18px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    font-size: 11px;
+    color: #888;
+  }
+  footer .foot-sep { color: #ccc; }
+  footer a { color: #555; text-decoration: none; }
+  footer a:hover { color: #111; text-decoration: underline; }
+  footer .spacer { flex: 1; }
+
+  /* ==========================================================
+     SELECTIVITY PANEL CONTROLS
+     ========================================================== */
+  .sel-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    align-items: flex-start;
+  }
+  .sel-block {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .sel-block.flex { flex: 1; min-width: 220px; }
+  .sel-block-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+  }
+  .sel-block-label .sel-target-tag { color: #ec4899; }
+  .sel-block-label .sel-comp-tag { color: #06b6d4; }
+  .sel-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .sel-chip {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .sel-chip:hover:not(.target-active):not(.comparator-active):not(.disabled) { background: #f3f3f3; }
+  .sel-chip.disabled { opacity: 0.4; cursor: not-allowed; }
+  .sel-chip.target-active {
+    background: #ec4899;
+    color: #fff;
+    border-color: #ec4899;
+  }
+  .sel-chip.comparator-active {
+    background: #06b6d4;
+    color: #fff;
+    border-color: #06b6d4;
+  }
+  .sel-input {
+    font: inherit;
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    width: 80px;
+  }
+  .sel-input.tiny { width: 60px; }
+  .sel-btn {
+    font: inherit;
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #444;
+    cursor: pointer;
+  }
+  .sel-btn:hover { background: #f3f3f3; color: #111; }
+
+  .sel-readout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    padding: 8px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1px solid #efefef;
+    border-radius: 10px;
+    font-size: 12px;
+    align-items: baseline;
+  }
+  .sel-readout .sr-item { display: inline-flex; align-items: baseline; gap: 4px; }
+  .sel-readout .sr-label {
+    color: #888;
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .sel-readout .sr-value { font-weight: 600; color: #111; font-variant-numeric: tabular-nums; }
+  .sel-readout .sr-target { color: #ec4899; }
+  .sel-readout .sr-comparator { color: #06b6d4; }
+  .sel-readout .sr-side-l { border-left: 3px solid #b91c1c; padding-left: 6px; }
+  .sel-readout .sr-side-r { border-left: 3px solid #1d4ed8; padding-left: 6px; }
+  .sel-readout .sr-sep { color: #ccc; }
+
+  /* ==========================================================
+     DISTRIBUTIONS / VIOLINS PANEL CONTROLS
+     ========================================================== */
+  .vio-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    align-items: flex-start;
+  }
+  .vio-block { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .vio-block.flex { flex: 1; min-width: 260px; }
+  .vio-block-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+  }
+  .vio-pool-a-tag { color: #0d9488; }
+  .vio-pool-b-tag { color: #d97706; }
+
+  .vio-chip-grid { display: flex; flex-direction: column; gap: 5px; }
+  .vio-chip-row { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .vio-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    font-size: 11px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    white-space: nowrap;
+    font-family: inherit;
+    overflow: hidden;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .vio-chip-name {
+    padding: 3px 4px 3px 10px;
+    cursor: pointer;
+  }
+  .vio-chip-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 100%;
+    background: rgba(0,0,0,0.04);
+    font-size: 9px;
+    border-left: 1px solid rgba(0,0,0,0.08);
+    color: inherit;
+    cursor: pointer;
+    padding: 0 2px;
+  }
+  .vio-chip-chevron:hover { background: rgba(0,0,0,0.10); }
+
+  .vio-chip.pool-a-active {
+    background: #0d9488;
+    color: #fff;
+    border-color: #0d9488;
+  }
+  .vio-chip.pool-a-active .vio-chip-chevron {
+    background: rgba(255,255,255,0.18);
+    border-left-color: rgba(255,255,255,0.25);
+  }
+  .vio-chip.pool-b-active {
+    background: #d97706;
+    color: #fff;
+    border-color: #d97706;
+  }
+  .vio-chip.pool-b-active .vio-chip-chevron {
+    background: rgba(255,255,255,0.18);
+    border-left-color: rgba(255,255,255,0.25);
+  }
+  .vio-chip.pool-a-partial {
+    background: rgba(13,148,136,0.10);
+    border-color: #0d9488;
+    color: #0d9488;
+  }
+  .vio-chip.pool-b-partial {
+    background: rgba(217,119,6,0.10);
+    border-color: #d97706;
+    color: #d97706;
+  }
+  .vio-chip.disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .vio-subgroup-tray {
+    display: none;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 6px 8px;
+    background: #fafafa;
+    border: 1px dashed #d4d4d4;
+    border-radius: 8px;
+    margin-top: 2px;
+  }
+  .vio-subgroup-tray.expanded { display: flex; }
+
+  .vio-sub-chip {
+    font-size: 10.5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .vio-sub-chip:hover:not(.pool-a-active):not(.pool-b-active) { background: #f3f3f3; }
+  .vio-sub-chip.pool-a-active {
+    background: #0d9488; color: #fff; border-color: #0d9488;
+  }
+  .vio-sub-chip.pool-b-active {
+    background: #d97706; color: #fff; border-color: #d97706;
+  }
+  .vio-sub-chip.disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .vio-sex-toggle[data-on="true"] {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+
+  .vio-mode-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+  }
+  .vio-mode-bar .vio-spacer { flex: 1; }
+
+  .vio-pools-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    align-items: flex-start;
+  }
+
+  /* Picker chip styling — uses neutral dark gray for "in current build" */
+  .vio-chip.picker-active {
+    background: #374151;
+    color: #fff;
+    border-color: #374151;
+  }
+  .vio-chip.picker-active .vio-chip-chevron {
+    background: rgba(255,255,255,0.18);
+    border-left-color: rgba(255,255,255,0.25);
+  }
+  .vio-chip.picker-partial {
+    background: #f3f4f6;
+    border-color: #374151;
+    color: #374151;
+  }
+  .vio-sub-chip.picker-active {
+    background: #374151; color: #fff; border-color: #374151;
+  }
+
+  /* Pool list chips */
+  .vio-pool-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 0;
+    min-height: 36px;
+  }
+  .vio-pool-empty-hint {
+    font-size: 11.5px;
+    color: #aaa;
+    font-style: italic;
+    padding: 6px 0;
+  }
+  .vio-pool-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 4px 4px 12px;
+    border-radius: 999px;
+    border: 2px solid var(--pool-color, #888);
+    background: #fff;
+    color: var(--pool-color, #555);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    user-select: none;
+  }
+  .vio-pool-chip:hover { background: rgba(0,0,0,0.03); }
+  .vio-pool-chip.editing {
+    background: var(--pool-color, #555);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+  }
+  .vio-pool-chip-name { font-weight: 600; }
+  .vio-pool-chip-count {
+    font-size: 10.5px;
+    opacity: 0.7;
+    font-weight: 400;
+  }
+  .vio-pool-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.06);
+    font-size: 11px;
+    color: inherit;
+    cursor: pointer;
+    margin-left: 2px;
+  }
+  .vio-pool-chip-remove:hover { background: rgba(0,0,0,0.18); }
+  .vio-pool-chip.editing .vio-pool-chip-remove { background: rgba(255,255,255,0.18); }
+  .vio-pool-chip.editing .vio-pool-chip-remove:hover { background: rgba(255,255,255,0.32); }
+
+  /* ==========================================================
+     DEBUG WIDGET (development only — remove later)
+     ========================================================== */
+  #debug-state {
+    position: fixed;
+    bottom: 38px;
+    right: 12px;
+    background: rgba(20,20,20,0.92);
+    color: #b8e0ff;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10.5px;
+    padding: 8px 11px;
+    border-radius: 8px;
+    max-width: 360px;
+    z-index: 1000;
+    pointer-events: none;
+    white-space: pre;
+    line-height: 1.5;
+    opacity: 0.85;
+  }
+  #debug-state.hidden { display: none; }
+</style>
+</head>
+<body data-distance-mode="registered">
+
+  <div id="app">
+
+    <!-- =================================================
+         HEADER
+         ================================================= -->
+    <header>
+      <h1>Vagus Atlas Explorer</h1>
+      <span class="subtitle">A standardized map of human vagus nerve branch emergence</span>
+      <span class="badge dataset">n = 28 donors · 56 nerves · 2,177 branches</span>
+      <div class="spacer"></div>
+      <a href="#" class="header-link" title="Link to manuscript (placeholder)">Manuscript</a>
+      <a href="#" class="header-link" title="Link to GitHub repo (placeholder)">Code</a>
+    </header>
+
+    <!-- =================================================
+         SIDEBAR
+         ================================================= -->
+    <aside class="sidebar">
+
+      <div class="side-section">
+        <h4>Distance</h4>
+        <div class="toggle-row" id="toggle-distance-mode">
+          <button class="toggle-btn active" data-value="registered">Registered</button>
+          <button class="toggle-btn" data-value="raw">Raw</button>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <h4>Panel</h4>
+        <div class="panel-nav" id="panel-nav">
+          <button class="nav-item active" data-panel="individual">
+            <span class="nav-dot"></span><span>Individual Branches</span>
+          </button>
+          <button class="nav-item" data-panel="subway">
+            <span class="nav-dot"></span><span>Subway Map</span>
+          </button>
+          <button class="nav-item" data-panel="violins">
+            <span class="nav-dot"></span><span>Distributions</span>
+          </button>
+          <button class="nav-item" data-panel="selectivity">
+            <span class="nav-dot"></span><span>Selectivity</span>
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- =================================================
+         MAIN
+         ================================================= -->
+    <main>
+
+      <!-- ----- Filter bar ----- -->
+      <div class="filter-bar">
+
+        <div class="filter-group">
+          <span class="filter-label">Side</span>
+          <button class="chip active" data-filter="side" data-value="L">Left</button>
+          <button class="chip active" data-filter="side" data-value="R">Right</button>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Sex</span>
+          <button class="chip active" data-filter="sex" data-value="F">Female</button>
+          <button class="chip active" data-filter="sex" data-value="M">Male</button>
+        </div>
+
+        <div class="filter-group" id="supergroup-chips">
+          <span class="filter-label">Supergroup</span>
+          <!-- supergroup chips injected by JS using canonical palette -->
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Donor</span>
+          <select id="subject-select">
+            <option value="">— All donors —</option>
+            <!-- populated by JS from atlasData.donors -->
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Jump to</span>
+          <button class="chip" data-jump="carotid">Carotid</button>
+          <button class="chip" data-jump="larynx">Larynx</button>
+          <button class="chip" data-jump="clavicle">Clavicle</button>
+        </div>
+
+        <button class="reset-btn" id="reset-filters">Reset</button>
+      </div>
+
+      <!-- ----- Panel area ----- -->
+      <div class="panel-area">
+
+        <!-- Panel: Individual Branches -->
+        <section class="panel active" data-panel="individual">
+          <div class="card">
+            <div class="card-header">
+              <h2>Individual Branches</h2>
+              <span class="card-meta" id="individual-card-meta">Every branch as one mark along the registered axis</span>
+            </div>
+            <div class="card-body">
+              <div id="fig-individual" style="width:100%;height:100%;min-height:520px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel: Subway Map -->
+        <section class="panel" data-panel="subway">
+          <div class="card">
+            <div class="card-header">
+              <h2>Subway Map</h2>
+              <span class="card-meta">Top-25 subgroups · donor-level presence breakdown (Left-only / Right-only / Bilateral / Total)</span>
+            </div>
+            <div class="card-body">
+              <div id="fig-subway" style="width:100%;max-width:1100px;margin:0 auto;min-height:1000px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel: Distributions (violins) -->
+        <section class="panel" data-panel="violins">
+          <div class="card">
+            <div class="card-header">
+              <h2>Distributions</h2>
+              <span class="card-meta" id="vio-card-meta">Top-25 subgroups · Fig 2 atlas</span>
+            </div>
+            <div class="card-body">
+
+              <!-- Mode + Sex split bar -->
+              <div class="vio-mode-bar">
+                <div class="toggle-row" id="vio-mode-toggle">
+                  <button class="toggle-btn active" data-mode="atlas">Atlas (Fig 2)</button>
+                  <button class="toggle-btn" data-mode="pools">Pools comparison</button>
+                </div>
+                <div class="vio-spacer"></div>
+                <div class="vio-block">
+                  <span class="vio-block-label">Sex split</span>
+                  <button class="sel-btn vio-sex-toggle" id="vio-sex-toggle" data-on="false">OFF</button>
+                </div>
+              </div>
+
+              <!-- Pools-mode controls (hidden in atlas mode) -->
+              <div class="vio-pools-controls" id="vio-pools-controls" style="display:none;">
+
+                <div class="vio-block flex">
+                  <span class="vio-block-label">Build a pool — click chip to toggle whole supergroup, ▾ for subgroups</span>
+                  <div class="vio-chip-grid" id="vio-picker-chips"></div>
+                </div>
+
+                <div class="vio-block">
+                  <span class="vio-block-label" id="vio-name-label">Pool name (optional)</span>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <input type="text" id="vio-pool-name" class="sel-input" placeholder="e.g. Pharyngeal arch" style="min-width:170px;">
+                    <button class="sel-btn" id="vio-add-pool">+ Add pool</button>
+                    <button class="sel-btn" id="vio-cancel-edit" style="display:none;">Cancel</button>
+                  </div>
+                </div>
+
+                <div class="vio-block">
+                  <span class="vio-block-label">Presets</span>
+                  <select id="vio-preset" class="sel-input">
+                    <option value="">— pick —</option>
+                    <option value="fig4A">Fig 4A · Pharyngeal Arch vs Primitive Mediastinum</option>
+                    <option value="fig4B1">Fig 4 B1 · Cardiac vs Neck</option>
+                    <option value="fig4C1">Fig 4 C1 · Thoracic core (4-way)</option>
+                    <option value="fig4C2">Fig 4 C2 · Cardiac subtypes (3-way)</option>
+                  </select>
+                </div>
+
+                <div class="vio-block flex" style="flex-basis:100%;">
+                  <span class="vio-block-label">Created pools — click a chip to edit · ✕ to remove</span>
+                  <div class="vio-pool-list" id="vio-pool-list"></div>
+                </div>
+
+              </div>
+
+              <div id="fig-violins" style="width:100%;max-width:1400px;margin:0 auto;min-height:760px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel: Selectivity -->
+        <section class="panel" data-panel="selectivity">
+          <div class="card">
+            <div class="card-header">
+              <h2>Selectivity</h2>
+              <span class="card-meta" id="sel-card-meta">Pick a target and a comparator</span>
+            </div>
+            <div class="card-body">
+
+              <!-- Sub-control bar -->
+              <div class="sel-controls">
+
+                <div class="sel-block">
+                  <span class="sel-block-label">Preset</span>
+                  <select id="sel-preset" class="sel-input" style="width:auto;">
+                    <option value="">— pick —</option>
+                    <option value="A">A · Thoracic vs Pharyngeal</option>
+                    <option value="B">B · Cardiac vs Neck</option>
+                    <option value="C">C · Cardiac vs Vascular</option>
+                    <option value="D">D · Sup. Cardiac Plexus vs Vascular</option>
+                    <option value="E">E · Deep+CP vs Sup.+Vascular</option>
+                  </select>
+                </div>
+
+                <div class="sel-block flex">
+                  <span class="sel-block-label"><span class="sel-target-tag">Target</span> — click to add/remove</span>
+                  <div class="sel-chips" id="sel-target-chips"></div>
+                </div>
+
+                <div class="sel-block flex">
+                  <span class="sel-block-label"><span class="sel-comp-tag">Comparator</span> — click to add/remove</span>
+                  <div class="sel-chips" id="sel-comparator-chips"></div>
+                </div>
+
+                <div class="sel-block">
+                  <span class="sel-block-label">Cursor (cm)</span>
+                  <input type="number" id="sel-cursor-x" class="sel-input tiny" min="0" max="35" step="0.5" />
+                </div>
+
+                <div class="sel-block">
+                  <span class="sel-block-label">Bin (cm)</span>
+                  <input type="number" id="sel-bin-width" class="sel-input tiny" min="0.5" max="5" step="0.5" value="1" />
+                </div>
+
+                <div class="sel-block">
+                  <span class="sel-block-label">&nbsp;</span>
+                  <button class="sel-btn" id="sel-snap-peak">↓ Snap to peak</button>
+                </div>
+
+              </div>
+
+              <!-- Live readout -->
+              <div class="sel-readout" id="sel-readout">
+                <span class="sr-label">Pick a target and a comparator (or use a preset)</span>
+              </div>
+
+              <!-- Plotly figure -->
+              <div id="fig-selectivity" style="width:100%;min-height:760px;"></div>
+
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+    <!-- =================================================
+         FOOTER
+         ================================================= -->
+    <footer>
+      <span>Dataset: <code>vagus_atlas_analysis.xlsx</code></span>
+      <span class="foot-sep">·</span>
+      <span>Registration: piecewise-linear (U/M/D/E anchors)</span>
+      <span class="foot-sep">·</span>
+      <span>Distance column: <code>registered_distance_v2</code></span>
+      <div class="spacer"></div>
+      <a href="#" title="Manuscript citation (placeholder)">Cite</a>
+      <span class="foot-sep">·</span>
+      <a href="#" title="GitHub data package (placeholder)">GitHub</a>
+      <span class="foot-sep">·</span>
+      <span>v0.1 · 2026-04-28</span>
+    </footer>
+
+  </div>
+
+  <!-- =================================================
+       DEBUG STATE WIDGET (dev only)
+       ================================================= -->
+  <div id="debug-state"></div>
+
+  <!-- =================================================
+       STATE MANAGEMENT
+       ================================================= -->
+  <script>
+  (function () {
+    'use strict';
+
+    // Canonical 7-supergroup palette (manuscript-aligned)
+    const SUPERGROUP_PALETTE = {
+      'Sympathetic':       '#e41a1c',
+      'Muscular':          '#377eb8',
+      'Vascular':          '#4daf4a',
+      'Cardiac':           '#984ea3',
+      'Pulmonary':         '#ff7f00',
+      'Esophageal':        '#a65628',
+      'Multiple Targets':  '#999999',
+    };
+    const SUPERGROUP_ORDER = [
+      'Sympathetic', 'Muscular', 'Vascular',
+      'Cardiac', 'Pulmonary', 'Esophageal',
+      'Multiple Targets',
+    ];
+
+    // ---- Application state ----
+    const state = {
+      distanceMode: 'registered',      // 'registered' | 'raw'
+      activePanel: 'individual',       // 'individual' | 'subgroup-means' | 'metro' | 'density' | 'selectivity'
+      filters: {
+        side: new Set(['L', 'R']),
+        sex: new Set(['F', 'M']),
+        supergroups: new Set(SUPERGROUP_ORDER),
+        subject: null,                 // null = all donors
+      },
+    };
+
+    // Make state inspectable from devtools
+    window.appState = state;
+
+    // ---- Event emitter ----
+    function emit(detail) {
+      window.dispatchEvent(new CustomEvent('state-changed', { detail }));
+    }
+
+    // ---- Build supergroup chips ----
+    function buildSupergroupChips() {
+      const host = document.getElementById('supergroup-chips');
+      SUPERGROUP_ORDER.forEach((sg) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip sg-chip active';
+        btn.dataset.filter = 'supergroup';
+        btn.dataset.value = sg;
+        btn.style.setProperty('--sg-color', SUPERGROUP_PALETTE[sg]);
+        btn.textContent = sg;
+        host.appendChild(btn);
+      });
+    }
+
+    // ---- Distance mode toggle ----
+    document.getElementById('toggle-distance-mode').addEventListener('click', (e) => {
+      const btn = e.target.closest('.toggle-btn');
+      if (!btn) return;
+      const value = btn.dataset.value;
+      if (value === state.distanceMode) return;
+      state.distanceMode = value;
+      document.body.dataset.distanceMode = value;
+      document.querySelectorAll('#toggle-distance-mode .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.value === value));
+      emit({ kind: 'distanceMode', value });
+      renderDebug();
+    });
+
+    // ---- Panel selector ----
+    function setActivePanel(panel) {
+      state.activePanel = panel;
+      document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.dataset.panel === panel));
+      document.querySelectorAll('#panel-nav .nav-item').forEach(b => b.classList.toggle('active', b.dataset.panel === panel));
+      emit({ kind: 'activePanel', value: panel });
+      renderDebug();
+    }
+    document.getElementById('panel-nav').addEventListener('click', (e) => {
+      const btn = e.target.closest('.nav-item');
+      if (!btn) return;
+      if (btn.classList.contains('disabled')) return;
+      const panel = btn.dataset.panel;
+      if (panel === state.activePanel) return;
+      setActivePanel(panel);
+    });
+
+    // ---- Filter chips ----
+    function toggleFilter(filterKey, value) {
+      const set = state.filters[filterKey];
+      if (set.has(value)) {
+        // Don't allow zero selections — keep at least one
+        if (set.size > 1) set.delete(value);
+        else return false;
+      } else {
+        set.add(value);
+      }
+      return true;
+    }
+
+    document.querySelector('.filter-bar').addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip[data-filter]');
+      if (chip) {
+        const filter = chip.dataset.filter;
+        const value = chip.dataset.value;
+        const filterKey = filter === 'supergroup' ? 'supergroups' : filter;
+        const changed = toggleFilter(filterKey, value);
+        if (changed) {
+          chip.classList.toggle('active');
+          emit({ kind: 'filter', filter: filterKey, value });
+          renderDebug();
+        }
+        return;
+      }
+      const jumpBtn = e.target.closest('.chip[data-jump]');
+      if (jumpBtn) {
+        const target = jumpBtn.dataset.jump;
+        emit({ kind: 'jump', target });
+        // visual blip
+        jumpBtn.classList.add('active');
+        setTimeout(() => jumpBtn.classList.remove('active'), 200);
+        return;
+      }
+    });
+
+    // ---- Subject dropdown (donor mode) ----
+    document.getElementById('subject-select').addEventListener('change', (e) => {
+      const v = e.target.value;
+      state.filters.subject = v === '' ? null : v;
+      emit({ kind: 'subject', value: state.filters.subject });
+      renderDebug();
+    });
+
+    // ---- Reset ----
+    document.getElementById('reset-filters').addEventListener('click', () => {
+      state.filters.side = new Set(['L', 'R']);
+      state.filters.sex = new Set(['F', 'M']);
+      state.filters.supergroups = new Set(SUPERGROUP_ORDER);
+      state.filters.subject = null;
+
+      document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.add('active'));
+      document.getElementById('subject-select').value = '';
+
+      emit({ kind: 'reset' });
+      renderDebug();
+    });
+
+    // ---- Debug widget ----
+    function renderDebug() {
+      const el = document.getElementById('debug-state');
+      const snapshot = {
+        distance: state.distanceMode,
+        panel: state.activePanel,
+        side: [...state.filters.side],
+        sex: [...state.filters.sex],
+        supergroups: [...state.filters.supergroups].length + ' / 7',
+        subject: state.filters.subject || '(all)',
+      };
+      el.textContent = JSON.stringify(snapshot, null, 2);
+    }
+
+    // Toggle debug widget with `~` key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '`' || e.key === '~') {
+        document.getElementById('debug-state').classList.toggle('hidden');
+      }
+    });
+
+    // ---- Bootstrap ----
+    buildSupergroupChips();
+    renderDebug();
+
+    console.log('[Vagus Atlas Explorer] state initialized', state);
+    console.log('[Vagus Atlas Explorer] subscribe to state changes via window.addEventListener("state-changed", e => ...)');
+  })();
+  </script>
+
+  <!-- =================================================
+       DISTRIBUTIONS / VIOLINS PANEL
+       ================================================= -->
+  <script>
+  (function () {
+    'use strict';
+    if (!window.atlasData) return;
+    const D = window.atlasData;
+    const branches = D.branches;
+
+    // Canonical supergroup palette (Atlas mode)
+    const SG_PALETTE = {
+      'Sympathetic':       '#e41a1c',
+      'Muscular':          '#377eb8',
+      'Vascular':          '#4daf4a',
+      'Cardiac':           '#984ea3',
+      'Pulmonary':         '#ff7f00',
+      'Esophageal':        '#a65628',
+      'Multiple Targets':  '#999999',
+      'Other':             '#000000',
+    };
+    const GROUP_ORDER = ['Sympathetic', 'Muscular', 'Multiple Targets', 'Vascular', 'Cardiac', 'Pulmonary', 'Esophageal'];
+
+    // Auto-assigned palette for user pools (cycles)
+    const POOL_PALETTE = [
+      '#0d9488', // teal
+      '#d97706', // amber
+      '#c2185b', // magenta
+      '#65a30d', // lime
+      '#1e40af', // navy
+      '#ea580c', // coral
+      '#7c3aed', // violet
+      '#0e7490', // cyan-deep
+    ];
+
+    const SIDE_LM_COLOR = { L: '#b91c1c', R: '#1d4ed8' };
+    const LANDMARK_LABEL = {
+      U: 'Carotid Bifurcation',
+      M: 'Laryngeal Prominence',
+      D: 'Sup. Border of Clavicle',
+    };
+
+    // -----------------------------------------------
+    // Subgroup label canonicalization (port of Cell 9)
+    // -----------------------------------------------
+    const CANON_SUB = {
+      'superior cervical ganglion': 'Superior Cervical Ganglion',
+      'ansa cervicalis': 'Ansa Cervicalis',
+      'carotid sinus': 'Carotid Sinus',
+      'internal carotid artery': 'Internal Carotid Artery',
+      'common carotid': 'Common Carotid',
+      'internal jugular vein': 'Internal Jugular Vein',
+      'superficial cardiac plexus': 'Superficial Cardiac Plexus',
+      'deep cardiac plexus': 'Deep Cardiac Plexus',
+      'esophageal plexus': 'Esophageal Plexus',
+    };
+    function standardizeSub(group, sub) {
+      let s = (sub || '').trim();
+      if (!s || s.toLowerCase() === 'nan') return '';
+      if (s === 'General') s = 'Unspecified';
+      if (group === 'Esophageal') {
+        const ll = s.toLowerCase();
+        if (ll === 'esophageal plexus')   s = 'Esophageal Plexus';
+        else if (ll === 'pulmonary')      s = 'Pulmonary (Esophageal)';
+        else if (ll === 'cardiac')        s = 'Cardiac (Esophageal)';
+        else if (ll === 'cardiopulmonary') s = 'Cardiopulmonary (Esophageal)';
+      }
+      s = s.replace(/^Unspecified\s*\(.+\)$/i, 'Unspecified');
+      if (s === 'Unspecified' && (group === 'Vascular' || group === 'Cardiac' || group === 'Esophageal')) {
+        s = 'General ' + group;
+      }
+      const lower = s.toLowerCase();
+      if (CANON_SUB[lower]) s = CANON_SUB[lower];
+      return s;
+    }
+
+    // -----------------------------------------------
+    // Build subgroup index per supergroup, sorted by branch frequency
+    // -----------------------------------------------
+    const subStdAll = branches.subgroup.map((s, i) => standardizeSub(branches.group[i], s));
+    const groupSubs = {};
+    const subCount = new Map();
+    for (let i = 0; i < branches.subject.length; i++) {
+      const g = branches.group[i];
+      const s = subStdAll[i];
+      if (!s) continue;
+      if (!groupSubs[g]) groupSubs[g] = new Set();
+      groupSubs[g].add(s);
+      subCount.set(s, (subCount.get(s) || 0) + 1);
+    }
+    const groupSubsSorted = {};
+    for (const g of GROUP_ORDER) {
+      const subs = [...(groupSubs[g] || [])];
+      subs.sort((a, b) => (subCount.get(b) || 0) - (subCount.get(a) || 0));
+      groupSubsSorted[g] = subs;
+    }
+    const TOP_25 = [...subCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25).map(e => e[0]);
+    const TOP_25_SET = new Set(TOP_25);
+
+    // -----------------------------------------------
+    // Panel state
+    // -----------------------------------------------
+    const sel = {
+      mode: 'atlas',                         // 'atlas' | 'pools'
+      pools: [],                             // [{ id, name, members:Set<'G|S'>, color }]
+      poolIdCounter: 0,
+      picker: new Set(),                     // current build/edit selection
+      editingId: null,                       // id of pool being edited
+      expanded: new Set(),                   // expanded supergroups in picker
+      sexSplit: false,
+    };
+
+    // -----------------------------------------------
+    // Presets — each defines an array of pools
+    // 'G|*' means all subgroups of that group; 'G|S' means specific subgroup
+    // -----------------------------------------------
+    const PRESETS = {
+      fig4A: [
+        { name: 'Pharyngeal Arch',         members: ['Sympathetic|*', 'Muscular|*', 'Vascular|*', 'Multiple Targets|*'] },
+        { name: 'Primitive Mediastinum',   members: ['Cardiac|*', 'Pulmonary|*', 'Esophageal|*'] },
+      ],
+      fig4B1: [
+        { name: 'Cardiac',                 members: ['Cardiac|*'] },
+        { name: 'Neck (Symp+Musc+Vasc)',   members: ['Sympathetic|*', 'Muscular|*', 'Vascular|*'] },
+      ],
+      fig4C1: [
+        { name: 'Cardiac',                 members: ['Cardiac|*'] },
+        { name: 'Cardiopulmonary',         members: ['Cardiac|Cardiopulmonary'] },
+        { name: 'Pulmonary',               members: ['Pulmonary|*'] },
+        { name: 'Esophageal core',         members: ['Esophageal|*'] },
+      ],
+      fig4C2: [
+        { name: 'Sup. Cardiac Plexus',     members: ['Cardiac|Superficial Cardiac Plexus'] },
+        { name: 'Deep Cardiac Plexus',     members: ['Cardiac|Deep Cardiac Plexus'] },
+        { name: 'Cardiopulmonary',         members: ['Cardiac|Cardiopulmonary'] },
+      ],
+    };
+
+    function expandSpec(specEntries) {
+      const out = new Set();
+      for (const entry of specEntries) {
+        const [g, s] = entry.split('|');
+        if (s === '*') {
+          for (const sub of (groupSubsSorted[g] || [])) out.add(g + '|' + sub);
+        } else {
+          out.add(g + '|' + s);
+        }
+      }
+      return out;
+    }
+
+    function applyPreset(key) {
+      const spec = PRESETS[key];
+      if (!spec) return;
+      sel.pools = spec.map((p, i) => ({
+        id: sel.poolIdCounter++,
+        name: p.name,
+        members: expandSpec(p.members),
+        color: POOL_PALETTE[i % POOL_PALETTE.length],
+      }));
+      sel.picker.clear();
+      sel.expanded.clear();
+      sel.editingId = null;
+      document.getElementById('vio-pool-name').value = '';
+      refreshAll();
+      render();
+    }
+
+    // -----------------------------------------------
+    // Build the picker (single chip grid)
+    // -----------------------------------------------
+    function buildPicker() {
+      const host = document.getElementById('vio-picker-chips');
+      host.innerHTML = '';
+      for (const g of GROUP_ORDER) {
+        const wrap = document.createElement('div');
+        wrap.className = 'vio-chip-row';
+        const chip = document.createElement('div');
+        chip.className = 'vio-chip';
+        chip.dataset.sg = g;
+        const name = document.createElement('span');
+        name.className = 'vio-chip-name';
+        name.textContent = g;
+        name.dataset.action = 'toggle-sg';
+        const chev = document.createElement('span');
+        chev.className = 'vio-chip-chevron';
+        chev.textContent = '▾';
+        chev.dataset.action = 'toggle-tray';
+        chip.appendChild(name);
+        chip.appendChild(chev);
+        const tray = document.createElement('div');
+        tray.className = 'vio-subgroup-tray';
+        tray.dataset.sg = g;
+        for (const s of (groupSubsSorted[g] || [])) {
+          const sub = document.createElement('div');
+          sub.className = 'vio-sub-chip';
+          sub.dataset.sg = g;
+          sub.dataset.sub = s;
+          sub.textContent = s;
+          tray.appendChild(sub);
+        }
+        wrap.appendChild(chip);
+        host.appendChild(wrap);
+        host.appendChild(tray);
+      }
+      host.addEventListener('click', onPickerClick);
+    }
+
+    function onPickerClick(e) {
+      const chev = e.target.closest('.vio-chip-chevron');
+      const subChip = e.target.closest('.vio-sub-chip');
+      const sgName = e.target.closest('.vio-chip-name');
+      if (chev) {
+        const chip = chev.closest('.vio-chip');
+        const g = chip.dataset.sg;
+        if (sel.expanded.has(g)) sel.expanded.delete(g);
+        else sel.expanded.add(g);
+        refreshPicker();
+        return;
+      }
+      if (sgName) {
+        const chip = sgName.closest('.vio-chip');
+        toggleWholeSupergroup(chip.dataset.sg);
+        refreshPicker();
+        return;
+      }
+      if (subChip) {
+        toggleSubgroup(subChip.dataset.sg, subChip.dataset.sub);
+        refreshPicker();
+        return;
+      }
+    }
+
+    function toggleSubgroup(g, s) {
+      const k = g + '|' + s;
+      if (sel.picker.has(k)) sel.picker.delete(k);
+      else sel.picker.add(k);
+    }
+    function toggleWholeSupergroup(g) {
+      const subs = groupSubsSorted[g] || [];
+      const allIn = subs.length > 0 && subs.every(s => sel.picker.has(g + '|' + s));
+      if (allIn) {
+        for (const s of subs) sel.picker.delete(g + '|' + s);
+      } else {
+        for (const s of subs) sel.picker.add(g + '|' + s);
+      }
+    }
+
+    function refreshPicker() {
+      const host = document.getElementById('vio-picker-chips');
+      host.querySelectorAll('.vio-chip').forEach(chip => {
+        const g = chip.dataset.sg;
+        const subs = groupSubsSorted[g] || [];
+        const inHere = subs.filter(s => sel.picker.has(g + '|' + s)).length;
+        chip.classList.remove('picker-active', 'picker-partial');
+        if (inHere === subs.length && subs.length > 0) chip.classList.add('picker-active');
+        else if (inHere > 0) chip.classList.add('picker-partial');
+        const chev = chip.querySelector('.vio-chip-chevron');
+        if (chev) chev.textContent = sel.expanded.has(g) ? '▴' : '▾';
+      });
+      host.querySelectorAll('.vio-subgroup-tray').forEach(tray => {
+        const g = tray.dataset.sg;
+        tray.classList.toggle('expanded', sel.expanded.has(g));
+        tray.querySelectorAll('.vio-sub-chip').forEach(sub => {
+          const k = g + '|' + sub.dataset.sub;
+          sub.classList.toggle('picker-active', sel.picker.has(k));
+        });
+      });
+    }
+
+    // -----------------------------------------------
+    // Pool list management
+    // -----------------------------------------------
+    function refreshPoolList() {
+      const list = document.getElementById('vio-pool-list');
+      list.innerHTML = '';
+      if (!sel.pools.length) {
+        const hint = document.createElement('span');
+        hint.className = 'vio-pool-empty-hint';
+        hint.textContent = 'No pools yet — build a pool above and click "+ Add pool"';
+        list.appendChild(hint);
+        return;
+      }
+      for (const p of sel.pools) {
+        const chip = document.createElement('div');
+        chip.className = 'vio-pool-chip';
+        chip.style.setProperty('--pool-color', p.color);
+        chip.dataset.poolId = p.id;
+        if (sel.editingId === p.id) chip.classList.add('editing');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'vio-pool-chip-name';
+        nameSpan.textContent = p.name;
+        const countSpan = document.createElement('span');
+        countSpan.className = 'vio-pool-chip-count';
+        countSpan.textContent = '· ' + p.members.size;
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'vio-pool-chip-remove';
+        removeBtn.textContent = '✕';
+        removeBtn.dataset.action = 'remove';
+
+        chip.appendChild(nameSpan);
+        chip.appendChild(countSpan);
+        chip.appendChild(removeBtn);
+        list.appendChild(chip);
+      }
+    }
+
+    function refreshAddButton() {
+      const addBtn = document.getElementById('vio-add-pool');
+      const cancelBtn = document.getElementById('vio-cancel-edit');
+      const nameLabel = document.getElementById('vio-name-label');
+      if (sel.editingId != null) {
+        addBtn.textContent = 'Update pool';
+        cancelBtn.style.display = 'inline-block';
+        nameLabel.textContent = 'Editing pool name';
+      } else {
+        addBtn.textContent = '+ Add pool';
+        cancelBtn.style.display = 'none';
+        nameLabel.textContent = 'Pool name (optional)';
+      }
+    }
+
+    function refreshAll() {
+      refreshPicker();
+      refreshPoolList();
+      refreshAddButton();
+    }
+
+    function onPoolListClick(e) {
+      const chip = e.target.closest('.vio-pool-chip');
+      if (!chip) return;
+      const id = parseInt(chip.dataset.poolId);
+      if (e.target.classList.contains('vio-pool-chip-remove')) {
+        // Remove pool
+        sel.pools = sel.pools.filter(p => p.id !== id);
+        if (sel.editingId === id) cancelEdit();
+        refreshAll();
+        render();
+        e.stopPropagation();
+        return;
+      }
+      // Click body → load into picker for editing
+      const pool = sel.pools.find(p => p.id === id);
+      if (!pool) return;
+      if (sel.editingId === id) {
+        // Click again to cancel edit
+        cancelEdit();
+        return;
+      }
+      sel.editingId = id;
+      sel.picker = new Set(pool.members);
+      sel.expanded.clear();
+      // Auto-expand groups that have partial subgroup selections
+      for (const g of GROUP_ORDER) {
+        const subs = groupSubsSorted[g] || [];
+        const inHere = subs.filter(s => sel.picker.has(g + '|' + s)).length;
+        if (inHere > 0 && inHere < subs.length) sel.expanded.add(g);
+      }
+      document.getElementById('vio-pool-name').value = pool.name;
+      refreshAll();
+    }
+
+    function addOrUpdatePool() {
+      if (sel.picker.size === 0) {
+        alert('Pick at least one subgroup before adding a pool.');
+        return;
+      }
+      const nameInput = document.getElementById('vio-pool-name');
+      const name = (nameInput.value || '').trim() || ('Pool ' + (sel.pools.length + 1));
+
+      if (sel.editingId != null) {
+        const pool = sel.pools.find(p => p.id === sel.editingId);
+        if (pool) {
+          pool.name = name;
+          pool.members = new Set(sel.picker);
+        }
+        sel.editingId = null;
+      } else {
+        const color = POOL_PALETTE[sel.pools.length % POOL_PALETTE.length];
+        sel.pools.push({
+          id: sel.poolIdCounter++,
+          name,
+          members: new Set(sel.picker),
+          color,
+        });
+      }
+      sel.picker.clear();
+      sel.expanded.clear();
+      nameInput.value = '';
+      refreshAll();
+      render();
+    }
+
+    function cancelEdit() {
+      sel.editingId = null;
+      sel.picker.clear();
+      sel.expanded.clear();
+      document.getElementById('vio-pool-name').value = '';
+      refreshAll();
+    }
+
+    // -----------------------------------------------
+    // Filter / aggregate helpers
+    // -----------------------------------------------
+    function indicesForSide(side, memberSet) {
+      const state = window.appState;
+      const b = branches;
+      const out = [];
+      for (let i = 0; i < b.subject.length; i++) {
+        if (b.side[i] !== side) continue;
+        if (b.sex[i] && !state.filters.sex.has(b.sex[i])) continue;
+        if (state.filters.subject && b.subject[i] !== state.filters.subject) continue;
+        const sg = subStdAll[i];
+        if (!sg) continue;
+        if (!memberSet.has(b.group[i] + '|' + sg)) continue;
+        out.push(i);
+      }
+      return out;
+    }
+
+    function distancesAndSex(idx, distKey) {
+      const b = branches;
+      const xs = [], sex = [];
+      for (const i of idx) {
+        const v = b[distKey][i];
+        if (v == null) continue;
+        xs.push(v);
+        sex.push(b.sex[i] || '');
+      }
+      return { xs, sex };
+    }
+
+    // -----------------------------------------------
+    // Mode switching
+    // -----------------------------------------------
+    function setMode(mode) {
+      if (mode !== 'atlas' && mode !== 'pools') return;
+      sel.mode = mode;
+      document.querySelectorAll('#vio-mode-toggle .toggle-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === mode);
+      });
+      document.getElementById('vio-pools-controls').style.display = (mode === 'pools') ? 'flex' : 'none';
+      render();
+    }
+
+    // -----------------------------------------------
+    // Landmark verticals helper
+    // -----------------------------------------------
+    function landmarkShapesAnnots(side, yMin, yMax, xref, yref, useReg) {
+      if (!useReg) return { shapes: [], annotations: [] };
+      const a = D.anchors[side] && D.anchors[side].registered;
+      if (!a) return { shapes: [], annotations: [] };
+      const lc = SIDE_LM_COLOR[side];
+      const shapes = [], annotations = [];
+      for (const k of ['U', 'M', 'D']) {
+        if (a[k] == null) continue;
+        shapes.push({
+          type: 'line', xref: xref, yref: yref,
+          x0: a[k], x1: a[k], y0: yMin, y1: yMax,
+          line: { color: lc, width: 2, dash: 'dash' },
+          layer: 'above',
+        });
+        annotations.push({
+          x: a[k], y: yMax, xref: xref, yref: yref,
+          text: '<b>' + LANDMARK_LABEL[k] + '</b>',
+          showarrow: false, yanchor: 'bottom',
+          font: { size: 10, color: lc },
+          bgcolor: 'rgba(255,255,255,0.92)', borderpad: 2,
+        });
+      }
+      return { shapes, annotations };
+    }
+
+    // -----------------------------------------------
+    // ATLAS MODE — Top-25 subgroups, supergroup-colored, paper Fig 2
+    // -----------------------------------------------
+    function renderAtlas() {
+      const state = window.appState;
+      const useReg = state.distanceMode === 'registered';
+      const distKey = useReg ? 'd_reg' : 'd_raw';
+      const sides = [...state.filters.side].sort();
+      const showBoth = sides.length === 2;
+      const meta = document.getElementById('vio-card-meta');
+
+      // Compute mean distance per top-25 subgroup for sort within group (cohort-stable)
+      const meanDist = new Map();
+      const sub2group = new Map();
+      for (let i = 0; i < branches.subject.length; i++) {
+        const sg = subStdAll[i];
+        if (!TOP_25_SET.has(sg)) continue;
+        if (!sub2group.has(sg)) sub2group.set(sg, branches.group[i]);
+        const v = branches[distKey][i];
+        if (v == null) continue;
+        if (!meanDist.has(sg)) meanDist.set(sg, { sum: 0, n: 0 });
+        const acc = meanDist.get(sg);
+        acc.sum += v; acc.n++;
+      }
+
+      // Build rows: header per group, then its subgroups sorted by mean distance
+      const rows = [];
+      for (const g of GROUP_ORDER) {
+        const subs = [...TOP_25].filter(s => sub2group.get(s) === g);
+        if (!subs.length) continue;
+        subs.sort((a, b) => {
+          const ma = meanDist.get(a); const mb = meanDist.get(b);
+          const va = ma && ma.n ? ma.sum / ma.n : 0;
+          const vb = mb && mb.n ? mb.sum / mb.n : 0;
+          return va - vb;
+        });
+        rows.push({ kind: 'header', group: g });
+        for (const s of subs) rows.push({ kind: 'sub', group: g, sub: s });
+      }
+      const K = rows.length;
+
+      // Map subgroup → row index
+      const subToRowIdx = new Map();
+      rows.forEach((r, i) => { if (r.kind === 'sub') subToRowIdx.set(r.sub, i); });
+
+      // X range
+      let xLo = Infinity, xHi = -Infinity;
+      for (let i = 0; i < branches.subject.length; i++) {
+        const v = branches[distKey][i];
+        if (v != null) { if (v < xLo) xLo = v; if (v > xHi) xHi = v; }
+      }
+      const xMin = Math.max(0, isFinite(xLo) ? xLo - 1 : 0);
+      const xMax = isFinite(xHi) ? xHi + 1 : 33;
+
+      // Build traces — one per supergroup (per side, per sex if split)
+      const traces = [];
+      const shapes = [];
+      const annotations = [];
+
+      sides.forEach((side, sIdx) => {
+        const xName = (showBoth && sIdx === 1) ? 'x2' : 'x';
+        const yName = (showBoth && sIdx === 1) ? 'y2' : 'y';
+
+        // Filter branches for this side + global filters, per supergroup
+        const perSg = {};
+        for (const g of GROUP_ORDER) perSg[g] = { x: [], y: [], sex: [], hover: [] };
+
+        for (let i = 0; i < branches.subject.length; i++) {
+          if (branches.side[i] !== side) continue;
+          if (branches.sex[i] && !state.filters.sex.has(branches.sex[i])) continue;
+          if (state.filters.subject && branches.subject[i] !== state.filters.subject) continue;
+          const sg = subStdAll[i];
+          if (!subToRowIdx.has(sg)) continue;
+          const v = branches[distKey][i];
+          if (v == null) continue;
+          const g = branches.group[i];
+          if (!perSg[g]) continue;
+          const yIdx = subToRowIdx.get(sg);
+          perSg[g].x.push(v);
+          perSg[g].y.push(yIdx);
+          perSg[g].sex.push(branches.sex[i] || '');
+          perSg[g].hover.push(sg + ' · ' + branches.subject[i] + ' ' + branches.side[i]);
+        }
+
+        for (const g of GROUP_ORDER) {
+          const data = perSg[g];
+          if (!data.x.length) continue;
+          const color = SG_PALETTE[g];
+
+          if (sel.sexSplit) {
+            // Two traces per supergroup, sex-split
+            const xF = [], yF = [], hF = [];
+            const xM = [], yM = [], hM = [];
+            for (let k = 0; k < data.x.length; k++) {
+              if (data.sex[k] === 'F') { xF.push(data.x[k]); yF.push(data.y[k]); hF.push(data.hover[k]); }
+              else if (data.sex[k] === 'M') { xM.push(data.x[k]); yM.push(data.y[k]); hM.push(data.hover[k]); }
+            }
+            if (xF.length) {
+              traces.push({
+                type: 'violin', orientation: 'h',
+                x: xF, y: yF, text: hF,
+                xaxis: xName, yaxis: yName,
+                side: 'positive',
+                fillcolor: color, opacity: 0.35,
+                line: { color: color, width: 1.2 },
+                box: { visible: false }, points: false,
+                meanline: { visible: true, color: color, width: 1 },
+                spanmode: 'hard',
+                width: 1.6,
+                hoveron: 'violins',
+                name: g,
+                legendgroup: 'sg-' + g,
+                showlegend: sIdx === 0,
+                hovertemplate: '<b>' + g + '</b> · F<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+              });
+            }
+            if (xM.length) {
+              traces.push({
+                type: 'violin', orientation: 'h',
+                x: xM, y: yM, text: hM,
+                xaxis: xName, yaxis: yName,
+                side: 'negative',
+                fillcolor: color, opacity: 0.35,
+                line: { color: color, width: 1.2 },
+                box: { visible: false }, points: false,
+                meanline: { visible: true, color: color, width: 1 },
+                spanmode: 'hard',
+                width: 1.6,
+                hoveron: 'violins',
+                name: g,
+                legendgroup: 'sg-' + g,
+                showlegend: false,
+                hovertemplate: '<b>' + g + '</b> · M<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+              });
+            }
+          } else {
+            traces.push({
+              type: 'violin', orientation: 'h',
+              x: data.x, y: data.y, text: data.hover,
+              xaxis: xName, yaxis: yName,
+              side: 'both',
+              fillcolor: color, opacity: 0.35,
+              line: { color: color, width: 1.4 },
+              box: { visible: false }, points: false,
+              meanline: { visible: true, color: color, width: 1 },
+              spanmode: 'hard',
+              width: 1.6,
+              hoveron: 'violins',
+              name: g,
+              legendgroup: 'sg-' + g,
+              showlegend: sIdx === 0,
+              hovertemplate: '<b>' + g + '</b><br>%{text}<br>%{x:.2f} cm<extra></extra>',
+            });
+          }
+        }
+
+        // Landmarks per side
+        const lm = landmarkShapesAnnots(side, -0.5, K - 0.5, xName, yName, useReg);
+        shapes.push(...lm.shapes);
+        annotations.push(...lm.annotations);
+
+        // Header dividers
+        rows.forEach((r, rIdx) => {
+          if (r.kind === 'header') {
+            shapes.push({
+              type: 'line', xref: xName, yref: yName,
+              x0: xMin, x1: xMax, y0: rIdx + 0.5, y1: rIdx + 0.5,
+              line: { color: 'rgba(0,0,0,0.18)', width: 1 },
+              layer: 'below',
+            });
+          }
+        });
+
+        if (showBoth) {
+          const titleX = sIdx === 0 ? 0.23 : 0.77;
+          annotations.push({
+            x: titleX, y: 1.02, xref: 'paper', yref: 'paper',
+            text: '<b>' + (side === 'L' ? 'Left' : 'Right') + '</b>',
+            showarrow: false, yanchor: 'bottom',
+            font: { size: 13, color: '#222' },
+          });
+        }
+      });
+
+      // Y ticks
+      const tickvals = rows.map((_, i) => i);
+      const ticktext = rows.map(r => {
+        const c = SG_PALETTE[r.group] || '#000';
+        if (r.kind === 'header') return '<b style="color:' + c + ';font-size:13px">' + r.group + '</b>';
+        return '<span style="color:' + c + '">' + r.sub + '</span>';
+      });
+
+      const figHeight = Math.max(720, K * 32 + 140);
+      const xtitle = useReg ? 'Registered distance (cm)' : 'Raw distance (cm)';
+
+      const layout = {
+        margin: { t: showBoth ? 36 : 22, r: 22, b: 50, l: 240 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+        shapes, annotations,
+        height: figHeight,
+        violingap: 0.2, violingroupgap: 0.05,
+        showlegend: true,
+        legend: { orientation: 'h', y: -0.06, x: 0.5, xanchor: 'center', font: { size: 11 } },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+      };
+
+      if (showBoth) {
+        layout.xaxis  = { domain: [0, 0.48],  anchor: 'y',  range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.xaxis2 = { domain: [0.52, 1.0], anchor: 'y2', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis  = { domain: [0, 1], anchor: 'x',  range: [K - 0.4, -0.6], tickvals, ticktext, tickfont: { size: 11 }, showgrid: false, zeroline: false };
+        layout.yaxis2 = { domain: [0, 1], anchor: 'x2', range: [K - 0.4, -0.6], tickvals: [], ticktext: [], showgrid: false, zeroline: false };
+      } else {
+        layout.xaxis = { domain: [0, 1], anchor: 'y', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis = { domain: [0, 1], anchor: 'x', range: [K - 0.4, -0.6], tickvals, ticktext, tickfont: { size: 11 }, showgrid: false, zeroline: false };
+      }
+
+      Plotly.react('fig-violins', traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+      meta.textContent = 'Atlas · Top-25 subgroups · supergroup colors · paper Fig 2' + (sel.sexSplit ? ' · Sex-split ON' : '');
+    }
+
+    // -----------------------------------------------
+    // POOLS MODE — one violin per pool, per side
+    // -----------------------------------------------
+    function renderPools() {
+      const state = window.appState;
+      const useReg = state.distanceMode === 'registered';
+      const distKey = useReg ? 'd_reg' : 'd_raw';
+      const sides = [...state.filters.side].sort();
+      const showBoth = sides.length === 2;
+      const meta = document.getElementById('vio-card-meta');
+
+      if (sel.pools.length === 0) {
+        Plotly.purge('fig-violins');
+        document.getElementById('fig-violins').innerHTML =
+          '<div class="figure-placeholder" style="margin:8px;">' +
+          '  <div class="ph-title">Build a pool to start</div>' +
+          '  <div class="ph-detail">Pick supergroups (or drill into individual subgroups via the ▾ chevron), give the pool an optional name, and click <b>+ Add pool</b>. Add as many pools as you want — each gets its own color and becomes a row in the figure. Use a preset above to populate the paper\'s Fig 4 comparisons in one click.</div>' +
+          '</div>';
+        meta.textContent = 'Pools comparison · no pools yet';
+        return;
+      }
+
+      const traces = [];
+      const shapes = [];
+      const annotations = [];
+
+      // X range
+      let xLo = Infinity, xHi = -Infinity;
+      for (let i = 0; i < branches.subject.length; i++) {
+        const v = branches[distKey][i];
+        if (v != null) { if (v < xLo) xLo = v; if (v > xHi) xHi = v; }
+      }
+      const xMin = Math.max(0, isFinite(xLo) ? xLo - 1 : 0);
+      const xMax = isFinite(xHi) ? xHi + 1 : 33;
+
+      // Pools render top-down: pool[0] at the top, pool[N-1] at the bottom
+      const N = sel.pools.length;
+      const yIdxOf = (poolIdx) => N - 1 - poolIdx;   // so pool[0] → highest yIdx → top of inverted axis
+      const tickvals = sel.pools.map((_, i) => yIdxOf(i));
+      const ticktext = sel.pools.map(p => '<b style="color:' + p.color + '">' + p.name + '</b><br><span style="font-size:10px;color:#888">n=' + p.members.size + '</span>');
+
+      sides.forEach((side, sIdx) => {
+        const xName = (showBoth && sIdx === 1) ? 'x2' : 'x';
+        const yName = (showBoth && sIdx === 1) ? 'y2' : 'y';
+
+        sel.pools.forEach((pool, pIdx) => {
+          const yPos = yIdxOf(pIdx);
+          const idx = indicesForSide(side, pool.members);
+          const dat = distancesAndSex(idx, distKey);
+          if (!dat.xs.length) return;
+
+          if (sel.sexSplit) {
+            const xF = [], xM = [];
+            for (let k = 0; k < dat.xs.length; k++) {
+              if (dat.sex[k] === 'F') xF.push(dat.xs[k]);
+              else if (dat.sex[k] === 'M') xM.push(dat.xs[k]);
+            }
+            if (xF.length) {
+              traces.push({
+                type: 'violin', orientation: 'h',
+                x: xF, y: xF.map(() => yPos),
+                xaxis: xName, yaxis: yName,
+                side: 'positive',
+                fillcolor: pool.color, opacity: 0.40,
+                line: { color: pool.color, width: 1.6 },
+                box: { visible: true, width: 0.20, fillcolor: 'rgba(255,255,255,0.7)' },
+                meanline: { visible: true, color: pool.color },
+                points: 'all', pointpos: 0, jitter: 0.4,
+                marker: { size: 3, color: pool.color, opacity: 0.5 },
+                spanmode: 'hard', width: 0.85,
+                name: pool.name + ' · F',
+                legendgroup: 'pool-' + pool.id,
+                showlegend: sIdx === 0,
+                hovertemplate: '<b>' + pool.name + '</b> · F<br>%{x:.2f} cm<extra></extra>',
+              });
+            }
+            if (xM.length) {
+              traces.push({
+                type: 'violin', orientation: 'h',
+                x: xM, y: xM.map(() => yPos),
+                xaxis: xName, yaxis: yName,
+                side: 'negative',
+                fillcolor: pool.color, opacity: 0.40,
+                line: { color: pool.color, width: 1.6 },
+                box: { visible: false },
+                meanline: { visible: true, color: pool.color },
+                points: 'all', pointpos: 0, jitter: 0.4,
+                marker: { size: 3, color: pool.color, opacity: 0.5 },
+                spanmode: 'hard', width: 0.85,
+                name: pool.name + ' · M',
+                legendgroup: 'pool-' + pool.id,
+                showlegend: false,
+                hovertemplate: '<b>' + pool.name + '</b> · M<br>%{x:.2f} cm<extra></extra>',
+              });
+            }
+          } else {
+            traces.push({
+              type: 'violin', orientation: 'h',
+              x: dat.xs, y: dat.xs.map(() => yPos),
+              xaxis: xName, yaxis: yName,
+              side: 'both',
+              fillcolor: pool.color, opacity: 0.40,
+              line: { color: pool.color, width: 1.6 },
+              box: { visible: true, width: 0.18, fillcolor: 'rgba(255,255,255,0.7)' },
+              meanline: { visible: true, color: pool.color },
+              points: 'all', pointpos: 0, jitter: 0.4,
+              marker: { size: 3, color: pool.color, opacity: 0.5 },
+              spanmode: 'hard', width: 0.85,
+              name: pool.name,
+              legendgroup: 'pool-' + pool.id,
+              showlegend: sIdx === 0,
+              hovertemplate: '<b>' + pool.name + '</b><br>%{x:.2f} cm<br>n = ' + dat.xs.length + '<extra></extra>',
+            });
+          }
+
+          // Stats annotation
+          const sorted = [...dat.xs].sort((a, b) => a - b);
+          if (sorted.length) {
+            const q = (p) => {
+              const idxF = (sorted.length - 1) * p;
+              const lo = Math.floor(idxF), hi = Math.ceil(idxF);
+              return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (idxF - lo);
+            };
+            const med = q(0.5);
+            const q1 = q(0.25);
+            const q3 = q(0.75);
+            annotations.push({
+              x: xMax - 0.2, y: yPos,
+              xref: xName, yref: yName,
+              text: 'n=' + dat.xs.length + ' · md ' + med.toFixed(1) + ' · IQR ' + q1.toFixed(1) + '–' + q3.toFixed(1),
+              showarrow: false, xanchor: 'right', yanchor: 'middle',
+              font: { size: 10.5, color: pool.color },
+              bgcolor: 'rgba(255,255,255,0.85)', borderpad: 2,
+            });
+          }
+        });
+
+        // Landmarks
+        const lm = landmarkShapesAnnots(side, -0.6, N - 0.4, xName, yName, useReg);
+        shapes.push(...lm.shapes);
+        annotations.push(...lm.annotations);
+
+        if (showBoth) {
+          const titleX = sIdx === 0 ? 0.23 : 0.77;
+          annotations.push({
+            x: titleX, y: 1.04, xref: 'paper', yref: 'paper',
+            text: '<b>' + (side === 'L' ? 'Left' : 'Right') + '</b>',
+            showarrow: false, yanchor: 'bottom',
+            font: { size: 13, color: '#222' },
+          });
+        }
+      });
+
+      const figHeight = Math.max(380, N * 110 + 120);
+      const xtitle = useReg ? 'Registered distance (cm)' : 'Raw distance (cm)';
+      const layout = {
+        margin: { t: showBoth ? 50 : 30, r: 22, b: 56, l: 130 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+        shapes, annotations,
+        height: figHeight,
+        violingap: 0.4,
+        showlegend: false,
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+      };
+      if (showBoth) {
+        layout.xaxis  = { domain: [0, 0.48],  anchor: 'y',  range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.xaxis2 = { domain: [0.52, 1.0], anchor: 'y2', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis  = { domain: [0, 1], anchor: 'x',  range: [-0.7, N - 0.3], tickvals, ticktext, tickfont: { size: 12 }, showgrid: false, zeroline: false };
+        layout.yaxis2 = { domain: [0, 1], anchor: 'x2', range: [-0.7, N - 0.3], tickvals: [], ticktext: [], showgrid: false, zeroline: false };
+      } else {
+        layout.xaxis = { domain: [0, 1], anchor: 'y', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis = { domain: [0, 1], anchor: 'x', range: [-0.7, N - 0.3], tickvals, ticktext, tickfont: { size: 12 }, showgrid: false, zeroline: false };
+      }
+
+      Plotly.react('fig-violins', traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+      meta.textContent = 'Pools comparison · ' + N + ' pool' + (N === 1 ? '' : 's') + (sel.sexSplit ? ' · Sex-split ON' : '');
+    }
+
+    // -----------------------------------------------
+    // Top-level render dispatcher
+    // -----------------------------------------------
+    function render() {
+      const state = window.appState;
+      if (state.activePanel !== 'violins') return;
+      if (sel.mode === 'pools') renderPools();
+      else renderAtlas();
+    }
+
+    // -----------------------------------------------
+    // Wire controls
+    // -----------------------------------------------
+    function wireControls() {
+      // Mode toggle
+      document.getElementById('vio-mode-toggle').addEventListener('click', e => {
+        const btn = e.target.closest('.toggle-btn');
+        if (btn) setMode(btn.dataset.mode);
+      });
+      // Sex-split toggle
+      document.getElementById('vio-sex-toggle').addEventListener('click', e => {
+        sel.sexSplit = !sel.sexSplit;
+        e.target.dataset.on = sel.sexSplit ? 'true' : 'false';
+        e.target.textContent = sel.sexSplit ? 'ON' : 'OFF';
+        render();
+      });
+      // Pool list interactions
+      document.getElementById('vio-pool-list').addEventListener('click', onPoolListClick);
+      // Add / Update pool
+      document.getElementById('vio-add-pool').addEventListener('click', addOrUpdatePool);
+      // Cancel edit
+      document.getElementById('vio-cancel-edit').addEventListener('click', cancelEdit);
+      // Preset
+      document.getElementById('vio-preset').addEventListener('change', e => {
+        const k = e.target.value;
+        if (k) applyPreset(k);
+      });
+    }
+
+    // -----------------------------------------------
+    // Subscribe + init
+    // -----------------------------------------------
+    window.addEventListener('state-changed', () => {
+      if (window.appState.activePanel === 'violins') render();
+    });
+    window.addEventListener('resize', () => {
+      const el = document.getElementById('fig-violins');
+      if (el && el.data) Plotly.Plots.resize(el);
+    });
+
+    buildPicker();
+    wireControls();
+    refreshAll();
+    if (window.appState && window.appState.activePanel === 'violins') render();
+  })();
+  </script>
+
+  <!-- =================================================
+       INDIVIDUAL BRANCHES FIGURE
+       ================================================= -->
+  <script>
+  (function () {
+    'use strict';
+
+    if (!window.atlasData) {
+      console.error('[atlas] window.atlasData missing — did vagus_atlas_data.js fail to load?');
+      return;
+    }
+    const D = window.atlasData;
+
+    const SG_COLOR = {
+      'Sympathetic':       '#e41a1c',
+      'Muscular':          '#377eb8',
+      'Vascular':          '#4daf4a',
+      'Cardiac':           '#984ea3',
+      'Pulmonary':         '#ff7f00',
+      'Esophageal':        '#a65628',
+      'Multiple Targets':  '#999999',
+    };
+
+    const SEX_COLOR = { F: '#c2185b', M: '#1976d2' };
+    const SEX_BG    = { F: 'rgba(194,24,91,0.06)', M: 'rgba(25,118,210,0.06)' };
+
+    const LANDMARK_SYMBOL = { U: 'triangle-up', M: 'star', D: 'square' };
+    const LANDMARK_LABEL  = { U: 'Carotid Bifurcation', M: 'Laryngeal Prominence', D: 'Sup. Border of Clavicle' };
+    const LM_RAW_COLOR    = '#FFC107';
+
+    // Populate Subject dropdown
+    (function populateSubjectDropdown() {
+      const sel = document.getElementById('subject-select');
+      sel.innerHTML = '<option value="">— All donors —</option>';
+      const donors = [...D.donors].sort((a, b) => a.id.localeCompare(b.id));
+      for (const d of donors) {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = `${d.id}  (${d.Sex || '?'}, age ${d.Age || '?'})`;
+        sel.appendChild(opt);
+      }
+    })();
+
+    function stairOffsets(xvals, step = 0.6, proximity = 0.7) {
+      const n = xvals.length;
+      const y = new Array(n).fill(null);
+      const order = [...Array(n).keys()].sort((a, b) => xvals[a] - xvals[b]);
+      const layers = [0.0];
+      for (let k = 1; k < 24; k++) layers.push(step * k, -step * k);
+      for (const idx of order) {
+        const used = new Set();
+        for (let j = 0; j < n; j++) {
+          if (j !== idx && y[j] !== null && Math.abs(xvals[idx] - xvals[j]) <= proximity) {
+            used.add(y[j]);
+          }
+        }
+        for (const lvl of layers) {
+          if (!used.has(lvl)) { y[idx] = lvl; break; }
+        }
+      }
+      return y;
+    }
+
+    function filteredBranchIndices(state) {
+      const b = D.branches;
+      const out = [];
+      for (let i = 0; i < b.subject.length; i++) {
+        if (!state.filters.side.has(b.side[i])) continue;
+        if (b.sex[i] && !state.filters.sex.has(b.sex[i])) continue;
+        if (!state.filters.supergroups.has(b.group[i])) continue;
+        if (state.filters.subject && b.subject[i] !== state.filters.subject) continue;
+        out.push(i);
+      }
+      return out;
+    }
+
+    function filteredLandmarkIndices(state) {
+      const l = D.landmarks;
+      const out = [];
+      for (let i = 0; i < l.subject.length; i++) {
+        if (!state.filters.side.has(l.side[i])) continue;
+        if (state.filters.subject && l.subject[i] !== state.filters.subject) continue;
+        out.push(i);
+      }
+      return out;
+    }
+
+    function renderPopulationMode(state, containerId) {
+      const useReg = state.distanceMode === 'registered';
+      const distKey = useReg ? 'd_reg' : 'd_raw';
+      const b = D.branches;
+      const l = D.landmarks;
+
+      const meta = document.getElementById('individual-card-meta');
+      const idx = filteredBranchIndices(state);
+      const lmIdx = filteredLandmarkIndices(state);
+
+      const sideOrder = ['R', 'L'];
+      const donorsBySex = { F: [], M: [] };
+      for (const d of D.donors) {
+        const s = (d.Sex || '').toUpperCase();
+        if (donorsBySex[s]) donorsBySex[s].push(d.id);
+      }
+      const sexGroups = [];
+      if (state.filters.sex.has('F')) sexGroups.push({ sex: 'F', ids: donorsBySex.F.slice().sort() });
+      if (state.filters.sex.has('M')) sexGroups.push({ sex: 'M', ids: donorsBySex.M.slice().sort() });
+
+      const laneSet = new Map();
+      const laneOrder = [];
+      let lanePtr = 0;
+      const sexBlockBounds = [];
+      for (const grp of sexGroups) {
+        const start = lanePtr;
+        for (const id of grp.ids) {
+          for (const side of sideOrder) {
+            if (!state.filters.side.has(side)) continue;
+            const hasBranch = idx.some(i => b.subject[i] === id && b.side[i] === side);
+            if (!hasBranch) continue;
+            const key = `${id}|${side}`;
+            laneSet.set(key, lanePtr);
+            laneOrder.push({ subject: id, side, lane: lanePtr, sex: grp.sex });
+            lanePtr++;
+          }
+        }
+        if (lanePtr > start) sexBlockBounds.push({ sex: grp.sex, start, end: lanePtr - 1 });
+      }
+      const nLanes = lanePtr;
+
+      if (nLanes === 0) {
+        Plotly.purge(containerId);
+        document.getElementById(containerId).innerHTML =
+          '<div class="figure-placeholder" style="margin:8px;">' +
+          '  <div class="ph-title">No data for current filters</div>' +
+          '  <div class="ph-detail">Loosen the Side / Sex / Supergroup filters above.</div>' +
+          '</div>';
+        meta.textContent = 'No data';
+        return;
+      }
+
+      let xMin = Infinity, xMax = -Infinity;
+      for (const i of idx) {
+        const v = b[distKey][i];
+        if (v == null) continue;
+        if (v < xMin) xMin = v;
+        if (v > xMax) xMax = v;
+      }
+      if (!isFinite(xMin)) { xMin = 0; xMax = 32; }
+      const xLeft = Math.min(0, xMin) - 0.5;
+      const xRight = xMax + 1.0;
+
+      const traces = [];
+      const shapes = [];
+      let landmarkAnnotations = [];
+
+      // Per-sex block backgrounds
+      for (const blk of sexBlockBounds) {
+        shapes.push({
+          type: 'rect', xref: 'x', yref: 'y',
+          x0: xLeft, x1: xRight,
+          y0: blk.start - 0.5, y1: blk.end + 0.5,
+          fillcolor: SEX_BG[blk.sex], line: { width: 0 }, layer: 'below',
+        });
+      }
+      // Subtle alternating lane bands
+      for (let k = 0; k < nLanes; k++) {
+        if (k % 2 === 1) continue;
+        shapes.push({
+          type: 'rect', xref: 'x', yref: 'y',
+          x0: xLeft, x1: xRight, y0: k - 0.5, y1: k + 0.5,
+          fillcolor: 'rgba(0,0,0,0.025)', line: { width: 0 }, layer: 'below',
+        });
+      }
+      // Hard divider between F and M blocks
+      if (sexBlockBounds.length === 2) {
+        const dividerY = sexBlockBounds[0].end + 0.5;
+        shapes.push({
+          type: 'line', xref: 'x', yref: 'y',
+          x0: xLeft, x1: xRight, y0: dividerY, y1: dividerY,
+          line: { color: 'rgba(0,0,0,0.18)', width: 1.2 },
+        });
+      }
+      // Sex group labels at left edge
+      for (const blk of sexBlockBounds) {
+        shapes.push({
+          type: 'rect', xref: 'paper', yref: 'y',
+          x0: 0, x1: 0.012,
+          y0: blk.start - 0.5, y1: blk.end + 0.5,
+          fillcolor: SEX_COLOR[blk.sex], line: { width: 0 },
+        });
+      }
+
+      const sidesPresent = new Set(laneOrder.map(o => o.side));
+      const isSingleDonor = state.filters.subject != null;
+      const useDashedLines = useReg || isSingleDonor;
+
+      if (useDashedLines) {
+        const showL = sidesPresent.has('L');
+        const showR = sidesPresent.has('R');
+        const yBottom = -0.5;
+        const yTop = nLanes - 0.5;
+        const yMid = (showL && showR) ? (yBottom + yTop) / 2 : null;
+
+        const LM_L_COLOR = '#b91c1c';
+        const LM_R_COLOR = '#1d4ed8';
+
+        function getLandmarkX(side, kind) {
+          if (useReg) {
+            const a = D.anchors[side] && D.anchors[side].registered;
+            return (a && a[kind] != null) ? a[kind] : null;
+          }
+          for (let i = 0; i < l.subject.length; i++) {
+            if (l.subject[i] !== state.filters.subject) continue;
+            if (l.side[i] !== side) continue;
+            if (l.kind[i] !== kind) continue;
+            const x = l[distKey][i];
+            if (x != null) return x;
+          }
+          return null;
+        }
+
+        for (const k of ['U', 'M', 'D']) {
+          if (showL) {
+            const xL = getLandmarkX('L', k);
+            if (xL != null) {
+              shapes.push({
+                type: 'line', xref: 'x', yref: 'y',
+                x0: xL, x1: xL,
+                y0: yMid != null ? yMid : yBottom,
+                y1: yTop,
+                line: { color: LM_L_COLOR, width: 2.5, dash: 'dash' },
+                layer: 'above',
+              });
+              landmarkAnnotations.push({
+                x: xL, y: yTop, xref: 'x', yref: 'y',
+                text: '<b>' + LANDMARK_LABEL[k] + '</b>',
+                showarrow: false, yanchor: 'bottom',
+                font: { size: 11.5, color: LM_L_COLOR },
+                bgcolor: 'rgba(255,238,238,0.95)', borderpad: 3,
+              });
+            }
+          }
+          if (showR) {
+            const xR = getLandmarkX('R', k);
+            if (xR != null) {
+              shapes.push({
+                type: 'line', xref: 'x', yref: 'y',
+                x0: xR, x1: xR,
+                y0: yBottom,
+                y1: yMid != null ? yMid : yTop,
+                line: { color: LM_R_COLOR, width: 2.5, dash: 'dash' },
+                layer: 'above',
+              });
+              landmarkAnnotations.push({
+                x: xR, y: yBottom, xref: 'x', yref: 'y',
+                text: '<b>' + LANDMARK_LABEL[k] + '</b>',
+                showarrow: false, yanchor: 'top',
+                font: { size: 11.5, color: LM_R_COLOR },
+                bgcolor: 'rgba(235,240,255,0.95)', borderpad: 3,
+              });
+            }
+          }
+        }
+      } else {
+        const byKind = { U: [], M: [], D: [] };
+        for (const i of lmIdx) {
+          const k = l.kind[i] || '';
+          if (!byKind[k]) continue;
+          const key = `${l.subject[i]}|${l.side[i]}`;
+          const lane = laneSet.get(key);
+          if (lane == null) continue;
+          const x = l[distKey][i];
+          if (x == null) continue;
+          byKind[k].push({ x, y: lane, name: l.name[i], subj: l.subject[i], side: l.side[i] });
+        }
+        for (const k of ['U', 'M', 'D']) {
+          if (!byKind[k].length) continue;
+          traces.push({
+            x: byKind[k].map(o => o.x),
+            y: byKind[k].map(o => o.y),
+            mode: 'markers',
+            name: LANDMARK_LABEL[k],
+            legendgroup: 'lm-' + k,
+            marker: {
+              size: 11,
+              symbol: LANDMARK_SYMBOL[k],
+              color: LM_RAW_COLOR,
+              line: { color: '#000', width: 1.0 },
+            },
+            text: byKind[k].map(o => o.name + ' — ' + o.subj + ' ' + o.side),
+            hovertemplate: '<b>%{text}</b><br>x = %{x:.2f} cm<extra></extra>',
+          });
+        }
+      }
+
+      const jitter = (i) => {
+        let h = i * 2654435761 | 0;
+        h ^= h >>> 15;
+        return ((h >>> 0) % 1000 / 1000 - 0.5) * 0.36;
+      };
+
+      for (const sg of D.meta.group_order) {
+        const sgIdx = idx.filter(i => b.group[i] === sg);
+        if (!sgIdx.length) continue;
+        const xs = [], ys = [], texts = [];
+        for (const i of sgIdx) {
+          const key = `${b.subject[i]}|${b.side[i]}`;
+          const lane = laneSet.get(key);
+          if (lane == null) continue;
+          xs.push(b[distKey][i]);
+          ys.push(lane + jitter(i));
+          texts.push(`${b.name[i]}<br><i>${b.group[i]} — ${b.subgroup[i]}</i><br>${b.subject[i]} ${b.side[i]} (${b.sex[i] || '?'})`);
+        }
+        traces.push({
+          x: xs, y: ys, mode: 'markers',
+          name: sg, legendgroup: sg,
+          marker: {
+            size: 7, color: SG_COLOR[sg], opacity: 0.85,
+            line: { color: 'rgba(0,0,0,0.5)', width: 0.5 },
+          },
+          text: texts, hovertemplate: '%{text}<br>x = %{x:.2f} cm<extra></extra>',
+        });
+      }
+
+      meta.textContent =
+        `${idx.length.toLocaleString()} branches across ${nLanes} nerves · `
+        + (useReg ? 'registered_distance_v2 (cm)' : 'raw distance from top of nerve (cm)');
+
+      const tickvals = laneOrder.map(o => o.lane);
+      const ticktext = laneOrder.map(o => {
+        const c = SEX_COLOR[o.sex] || '#666';
+        return `<span style="color:${c}"><b>${o.sex}</b></span>  ${o.subject}·${o.side}`;
+      });
+      const heightPx = Math.max(560, nLanes * 18 + 110);
+
+      for (const blk of sexBlockBounds) {
+        const yMid = (blk.start + blk.end) / 2;
+        landmarkAnnotations.push({
+          x: 1.005, y: yMid, xref: 'paper', yref: 'y',
+          text: `<b>${blk.sex === 'F' ? 'Female' : 'Male'}</b><br><span style="font-size:10px;color:#888">n=${blk.end - blk.start + 1}</span>`,
+          showarrow: false, xanchor: 'left', align: 'left',
+          font: { size: 12, color: SEX_COLOR[blk.sex] },
+        });
+      }
+
+      const layout = {
+        margin: { t: 32, r: 76, b: 42, l: 96 },
+        xaxis: {
+          title: useReg ? 'Registered distance (cm)' : 'Raw distance from top of nerve (cm)',
+          range: [xLeft, xRight],
+          showgrid: true, gridcolor: '#f0f0f0',
+          zeroline: false,
+        },
+        yaxis: {
+          range: [-0.6, nLanes - 0.4],
+          tickmode: 'array', tickvals: tickvals, ticktext: ticktext,
+          tickfont: { size: 10, color: '#444', family: 'ui-monospace, Menlo, Consolas, monospace' },
+          showgrid: false, zeroline: false,
+        },
+        shapes: shapes,
+        annotations: landmarkAnnotations,
+        plot_bgcolor: '#fff',
+        paper_bgcolor: '#fff',
+        height: heightPx,
+        legend: {
+          orientation: 'h', y: 1.04, x: 0, font: { size: 11 },
+          bgcolor: 'rgba(255,255,255,0)',
+        },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+      };
+
+      Plotly.react(containerId, traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+    }
+
+    function renderIndividual() {
+      const state = window.appState;
+      if (state.activePanel !== 'individual') return;
+      renderPopulationMode(state, 'fig-individual');
+    }
+
+    window.addEventListener('state-changed', (e) => {
+      const detail = e.detail || {};
+      if (detail.kind === 'jump') {
+        const state = window.appState;
+        const sides = [...state.filters.side];
+        const space = state.distanceMode === 'registered' ? 'registered' : 'raw';
+        const k = { carotid: 'U', larynx: 'M', clavicle: 'D' }[detail.target];
+        if (!k) return;
+        const vals = [];
+        for (const s of sides) {
+          const a = D.anchors[s] && D.anchors[s][space];
+          if (a && a[k] != null) vals.push(a[k]);
+        }
+        if (!vals.length) return;
+        const center = vals.reduce((p, c) => p + c, 0) / vals.length;
+        const span = 6;
+        Plotly.relayout('fig-individual', { 'xaxis.range': [center - span, center + span] });
+        return;
+      }
+      renderIndividual();
+    });
+
+    window.addEventListener('resize', () => {
+      const el = document.getElementById('fig-individual');
+      if (el && el.data) Plotly.Plots.resize(el);
+    });
+
+    renderIndividual();
+  })();
+  </script>
+
+
+  <!-- =================================================
+       SUBWAY MAP PANEL — replicates Cell 9 of manuscript notebook
+       ================================================= -->
+  <script>
+  (function () {
+    'use strict';
+    if (!window.atlasData) return;
+    const D = window.atlasData;
+
+    const GROUP_ORDER = ['Sympathetic', 'Muscular', 'Multiple Targets', 'Vascular', 'Cardiac', 'Pulmonary', 'Esophageal'];
+    const GROUP_COLOR = {
+      'Sympathetic':      '#e41a1c',
+      'Muscular':         '#377eb8',
+      'Vascular':         '#4daf4a',
+      'Cardiac':          '#984ea3',
+      'Pulmonary':        '#ff7f00',
+      'Esophageal':       '#a65628',
+      'Multiple Targets': '#999999',
+      'Other':            '#000000',
+    };
+
+    const xL = -1.05, xR = -0.35, xB = 0.35, xT = 1.05;
+    const TOP_K = 25;
+    const DIAM_MAX = 32;
+    const ROW_PX = 32;
+    const WRAP_THRESHOLD = 18;
+
+    const CANON_SUB = {
+      'superior cervical ganglion': 'Superior Cervical Ganglion',
+      'ansa cervicalis': 'Ansa Cervicalis',
+      'carotid sinus': 'Carotid Sinus',
+      'internal carotid artery': 'Internal Carotid Artery',
+      'common carotid': 'Common Carotid',
+      'internal jugular vein': 'Internal Jugular Vein',
+      'superficial cardiac plexus': 'Superficial Cardiac Plexus',
+      'deep cardiac plexus': 'Deep Cardiac Plexus',
+      'esophageal plexus': 'Esophageal Plexus',
+    };
+    function standardizeSubgroup(group, sub) {
+      let s = (sub || '').trim();
+      if (!s || s.toLowerCase() === 'nan') return '';
+      if (s === 'General') s = 'Unspecified';
+      if (group === 'Esophageal') {
+        const ll = s.toLowerCase();
+        if (ll === 'esophageal plexus')   s = 'Esophageal Plexus';
+        else if (ll === 'pulmonary')      s = 'Pulmonary (Esophageal)';
+        else if (ll === 'cardiac')        s = 'Cardiac (Esophageal)';
+        else if (ll === 'cardiopulmonary') s = 'Cardiopulmonary (Esophageal)';
+      }
+      s = s.replace(/^Unspecified\s*\(.+\)$/i, 'Unspecified');
+      if (s === 'Unspecified' && (group === 'Vascular' || group === 'Cardiac' || group === 'Esophageal')) {
+        s = 'General ' + group;
+      }
+      const lower = s.toLowerCase();
+      if (CANON_SUB[lower]) s = CANON_SUB[lower];
+      return s;
+    }
+
+    function diamFromFrac(frac) {
+      if (frac == null || isNaN(frac)) return 0;
+      return DIAM_MAX * Math.max(0, Math.min(1, frac));
+    }
+
+    function wrapLabel(s, threshold = WRAP_THRESHOLD) {
+      if (s.length <= threshold) return s;
+      const parts = s.split(' ');
+      if (parts.length < 2) return s;
+      let best = null;
+      for (let k = 1; k < parts.length; k++) {
+        const a = parts.slice(0, k).join(' ');
+        const b = parts.slice(k).join(' ');
+        const score = Math.max(a.length, b.length);
+        const balance = Math.abs(a.length - b.length);
+        if (!best || score < best.score || (score === best.score && balance < best.balance)) {
+          best = { score, balance, a, b };
+        }
+      }
+      if (!best || Math.max(best.a.length, best.b.length) >= s.length - 2) return s;
+      return best.a + '<br>' + best.b;
+    }
+
+    function computeStats() {
+      const state = window.appState;
+      const b = D.branches;
+      const distKey = state.distanceMode === 'registered' ? 'd_reg' : 'd_raw';
+      const subStd = b.subgroup.map((s, i) => standardizeSubgroup(b.group[i], s));
+
+      const cohortDonors = D.donors.filter(d => {
+        if (d.Sex && !state.filters.sex.has(d.Sex)) return false;
+        return true;
+      });
+      const cohortDonorIds = new Set(cohortDonors.map(d => d.id));
+
+      const cohortBranchPass = (i) => {
+        if (!state.filters.side.has(b.side[i])) return false;
+        if (!cohortDonorIds.has(b.subject[i])) return false;
+        if (!state.filters.supergroups.has(b.group[i])) return false;
+        return true;
+      };
+
+      const subCount = new Map();
+      const sub2group = new Map();
+      const subDistCohort = new Map();
+      for (let i = 0; i < b.subject.length; i++) {
+        if (!cohortBranchPass(i)) continue;
+        const s = subStd[i];
+        if (!s) continue;
+        subCount.set(s, (subCount.get(s) || 0) + 1);
+        if (!sub2group.has(s)) sub2group.set(s, b.group[i]);
+        const dv = b[distKey][i];
+        if (dv != null) {
+          if (!subDistCohort.has(s)) subDistCohort.set(s, []);
+          subDistCohort.get(s).push(dv);
+        }
+      }
+      const top25 = [...subCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_K).map(e => e[0]);
+      const topSet = new Set(top25);
+
+      const displayDonors = state.filters.subject
+        ? cohortDonors.filter(d => d.id === state.filters.subject)
+        : cohortDonors;
+      const N_COHORT = displayDonors.length;
+      if (N_COHORT === 0) return { stats: [], N_COHORT };
+      const displayDonorIds = new Set(displayDonors.map(d => d.id));
+
+      const presence = new Map();
+      for (let i = 0; i < b.subject.length; i++) {
+        const sg = subStd[i];
+        if (!topSet.has(sg)) continue;
+        if (!displayDonorIds.has(b.subject[i])) continue;
+        if (!state.filters.side.has(b.side[i])) continue;
+        if (!state.filters.supergroups.has(b.group[i])) continue;
+        presence.set(`${sg}|${b.subject[i]}|${b.side[i]}`, 1);
+      }
+
+      const stats = top25.map(sub => {
+        let nL = 0, nR = 0, nBoth = 0, nAny = 0;
+        for (const donor of displayDonors) {
+          const hasL = state.filters.side.has('L') && presence.has(`${sub}|${donor.id}|L`);
+          const hasR = state.filters.side.has('R') && presence.has(`${sub}|${donor.id}|R`);
+          if (hasL && hasR) nBoth++;
+          else if (hasL) nL++;
+          else if (hasR) nR++;
+          if (hasL || hasR) nAny++;
+        }
+        const distArr = subDistCohort.get(sub) || [];
+        const meanDist = distArr.length ? distArr.reduce((a, b) => a + b, 0) / distArr.length : 0;
+        return {
+          subgroup: sub,
+          group: sub2group.get(sub) || 'Other',
+          meanDist,
+          nL, nR, nBoth, nAny,
+        };
+      });
+
+      const rankMap = Object.fromEntries(GROUP_ORDER.map((g, i) => [g, i]));
+      stats.sort((a, b) => {
+        const ra = rankMap[a.group] ?? 999;
+        const rb = rankMap[b.group] ?? 999;
+        if (ra !== rb) return ra - rb;
+        return a.meanDist - b.meanDist;
+      });
+      return { stats, N_COHORT };
+    }
+
+    function buildRows(stats) {
+      const rows = [];
+      let prev = null;
+      for (let i = 0; i < stats.length; i++) {
+        if (stats[i].group !== prev) {
+          rows.push({ kind: 'header', group: stats[i].group });
+          prev = stats[i].group;
+        }
+        rows.push({ kind: 'subgroup', group: stats[i].group, sub: stats[i].subgroup, statIdx: i });
+      }
+      return rows;
+    }
+
+    function render() {
+      const state = window.appState;
+      if (state.activePanel !== 'subway') return;
+
+      const computed = computeStats();
+      const stats = computed.stats;
+      const N_COHORT_F = computed.N_COHORT;
+      const isDonorMode = state.filters.subject != null && N_COHORT_F === 1;
+
+      if (!stats.length || N_COHORT_F === 0) {
+        Plotly.purge('fig-subway');
+        document.getElementById('fig-subway').innerHTML =
+          '<div class="figure-placeholder" style="margin:8px;">' +
+          '  <div class="ph-title">No data for current filters</div>' +
+          '  <div class="ph-detail">Loosen the Side / Sex / Supergroup filters above to see the subway map.</div>' +
+          '</div>';
+        return;
+      }
+
+      const rows = buildRows(stats);
+      const K = rows.length;
+      const figHeight = Math.max(800, K * ROW_PX + 140);
+
+      const traces = [];
+
+      const cX = [], cY = [], cColor = [];
+      rows.forEach((r, yIdx) => {
+        if (r.kind === 'header') return;
+        const stat = stats[r.statIdx];
+        const col = GROUP_COLOR[stat.group] || GROUP_COLOR.Other;
+        [xL, xR, xB, xT].forEach(x => { cX.push(x); cY.push(yIdx); cColor.push(col); });
+      });
+      traces.push({
+        x: cX, y: cY, mode: 'markers',
+        marker: {
+          size: cX.map(() => DIAM_MAX),
+          color: cColor, opacity: 0.18,
+          line: { color: cColor, width: 1.1 },
+        },
+        hoverinfo: 'skip', showlegend: false,
+      });
+
+      const conX = [], conY = [];
+      rows.forEach((r, yIdx) => {
+        if (r.kind === 'header') return;
+        conX.push(xL, xT, null);
+        conY.push(yIdx, yIdx, null);
+      });
+      traces.push({
+        x: conX, y: conY, mode: 'lines',
+        line: { color: 'rgba(0,0,0,0.10)', width: 2 },
+        hoverinfo: 'skip', showlegend: false,
+      });
+
+      const presenceTypes = [
+        { x: xL, name: 'Left-only',  key: 'nL'    },
+        { x: xR, name: 'Right-only', key: 'nR'    },
+        { x: xB, name: 'Bilateral',  key: 'nBoth' },
+        { x: xT, name: 'Total',      key: 'nAny'  },
+      ];
+      for (const pt of presenceTypes) {
+        const xs = [], ys = [], colors = [], sizes = [], texts = [];
+        rows.forEach((r, yIdx) => {
+          if (r.kind === 'header') return;
+          const stat = stats[r.statIdx];
+          const n = stat[pt.key];
+          if (n === 0 && pt.key !== 'nAny') return;
+          const frac = n / N_COHORT_F;
+          xs.push(pt.x); ys.push(yIdx);
+          colors.push(GROUP_COLOR[stat.group] || GROUP_COLOR.Other);
+          sizes.push(diamFromFrac(frac));
+          texts.push(`<b>${stat.subgroup}</b><br>${pt.name}: ${(frac * 100).toFixed(0)}% (${n}/${N_COHORT_F})`);
+        });
+        traces.push({
+          x: [-99], y: [-99],
+          mode: 'markers',
+          marker: { size: 12, color: '#555' },
+          name: pt.name + ' presence',
+          legendgroup: 'pt-' + pt.name,
+          showlegend: true,
+          hoverinfo: 'skip',
+        });
+        traces.push({
+          x: xs, y: ys, mode: 'markers',
+          marker: { size: sizes, color: colors, line: { color: '#000', width: 1.1 } },
+          text: texts,
+          hovertemplate: '%{text}<extra></extra>',
+          name: pt.name,
+          legendgroup: 'pt-' + pt.name,
+          showlegend: false,
+        });
+      }
+
+      const shapes = [];
+      [xL, xR, xB, xT].forEach(x => {
+        shapes.push({
+          type: 'line', xref: 'x', yref: 'y',
+          x0: x, x1: x, y0: -0.8, y1: K - 0.2,
+          line: { color: 'black', width: 5 },
+          opacity: 0.22, layer: 'below',
+        });
+      });
+
+      rows.forEach((r, yIdx) => {
+        if (r.kind !== 'header') return;
+        shapes.push({
+          type: 'line', xref: 'x', yref: 'y',
+          x0: -1.5, x1: 1.5, y0: yIdx + 0.5, y1: yIdx + 0.5,
+          line: { color: 'black', width: 0.6 }, opacity: 0.08,
+        });
+      });
+
+      const annotations = [];
+      const firstHeaderY = rows.findIndex(r => r.kind === 'header');
+      [
+        { x: xL, text: 'Left-only<br>presence' },
+        { x: xR, text: 'Right-only<br>presence' },
+        { x: xB, text: 'Bilateral<br>presence' },
+        { x: xT, text: 'Total<br>presence' },
+      ].forEach(h => {
+        annotations.push({
+          x: h.x, y: firstHeaderY, xref: 'x', yref: 'y',
+          text: '<b>' + h.text + '</b>',
+          showarrow: false, xanchor: 'center', yanchor: 'middle',
+          font: { size: 11.5, color: '#222' },
+        });
+      });
+
+      if (!isDonorMode) {
+        rows.forEach((r, yIdx) => {
+          if (r.kind === 'header') return;
+          const stat = stats[r.statIdx];
+          const labels = [
+            { x: xL, n: stat.nL,    show: stat.nL    > 0 },
+            { x: xR, n: stat.nR,    show: stat.nR    > 0 },
+            { x: xB, n: stat.nBoth, show: stat.nBoth > 0 },
+            { x: xT, n: stat.nAny,  show: true },
+          ];
+          for (const lbl of labels) {
+            if (!lbl.show) continue;
+            const frac = lbl.n / N_COHORT_F;
+            annotations.push({
+              x: lbl.x, y: yIdx, xref: 'x', yref: 'y',
+              text: `${(frac * 100).toFixed(0)}% (${lbl.n})`,
+              showarrow: false, xanchor: 'right', yanchor: 'middle',
+              xshift: -(DIAM_MAX / 2 + 8),
+              font: { size: 10, color: '#333' },
+            });
+          }
+        });
+      }
+
+      const tickvals = rows.map((_, i) => i);
+      const ticktext = rows.map(r => {
+        const col = GROUP_COLOR[r.group] || '#000';
+        if (r.kind === 'header') {
+          return `<b style="color:${col}">${r.group}</b>`;
+        }
+        return `<span style="color:${col}">${wrapLabel(r.sub)}</span>`;
+      });
+
+      let titleText;
+      if (isDonorMode) {
+        const donor = D.donors.find(d => d.id === state.filters.subject);
+        const sexAge = donor ? `${donor.Sex || '?'}, age ${donor.Age || '?'}` : '';
+        titleText =
+          `<b>Donor ${state.filters.subject} ${sexAge ? '(' + sexAge + ')' : ''} — Top-${TOP_K} subgroups</b>` +
+          `<br><span style="font-size:12px;color:#666">Filled bubble = branch present  ·  Empty container = absent</span>`;
+      } else {
+        titleText =
+          `<b>Top-${TOP_K} Subgroups: Presence breakdown (Left-only / Right-only / Bilateral / Total)</b>` +
+          `<br><span style="font-size:12px;color:#666">Background bubble = 100% of cohort (N=${N_COHORT_F})  ·  Solid bubble diameter = subgroup prevalence</span>`;
+      }
+      const layout = {
+        title: { text: titleText, x: 0.02, xanchor: 'left', font: { size: 14 } },
+        xaxis: {
+          range: [-1.5, 1.5],
+          showgrid: false, zeroline: false,
+          showticklabels: false,
+          fixedrange: true,
+        },
+        yaxis: {
+          range: [K - 0.2, -1.0],
+          tickvals, ticktext,
+          tickfont: { size: 11 },
+          showgrid: false, zeroline: false,
+          fixedrange: true,
+        },
+        shapes, annotations,
+        plot_bgcolor: '#fff',
+        paper_bgcolor: '#fff',
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        margin: { l: 230, r: 60, t: 80, b: 30 },
+        height: figHeight,
+        legend: {
+          orientation: 'h',
+          x: 0.5, xanchor: 'center',
+          y: 1.04, yanchor: 'bottom',
+          font: { size: 11 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        },
+      };
+
+      Plotly.react('fig-subway', traces, layout, {
+        responsive: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+      });
+    }
+
+    window.addEventListener('state-changed', () => {
+      if (window.appState.activePanel === 'subway') render();
+    });
+    window.addEventListener('resize', () => {
+      const el = document.getElementById('fig-subway');
+      if (el && el.data) Plotly.Plots.resize(el);
+    });
+
+    if (window.appState && window.appState.activePanel === 'subway') render();
+  })();
+  </script>
+
+
+  <!-- =================================================
+       SELECTIVITY PANEL FIGURE
+       ================================================= -->
+  <script>
+  (function () {
+    'use strict';
+
+    if (!window.atlasData) return;
+    const D = window.atlasData;
+
+    const TGT_COLOR    = '#ec4899';
+    const TGT_FILL     = 'rgba(236,72,153,0.30)';
+    const CMP_COLOR    = '#06b6d4';
+    const CMP_FILL     = 'rgba(6,182,212,0.30)';
+    const CURVE_COLOR  = '#111';
+    const PEAK_COLOR   = '#111';
+    const CURSOR_COLOR = 'rgba(20,20,20,0.85)';
+    const SIDE_LM_COLOR = { L: '#b91c1c', R: '#1d4ed8' };
+
+    const LANDMARK_LABEL = {
+      U: 'Carotid Bifurcation',
+      M: 'Laryngeal Prominence',
+      D: 'Sup. Border of Clavicle',
+    };
+
+    const sel = {
+      target: new Set(),
+      comparator: new Set(),
+      cursorX: null,
+      binWidth: 1.0,
+    };
+
+    const PRESETS = {
+      A: { target: ['Cardiac', 'Pulmonary', 'Esophageal'],          comparator: ['Sympathetic', 'Muscular', 'Vascular'] },
+      B: { target: ['Cardiac'],                                     comparator: ['Sympathetic', 'Muscular', 'Vascular'] },
+      C: { target: ['Cardiac'],                                     comparator: ['Vascular'] },
+      D: { target: ['Cardiac|Superficial cardiac plexus'],          comparator: ['Vascular'] },
+      E: { target: ['Cardiac|Deep cardiac plexus', 'Cardiac|Cardiopulmonary'],
+           comparator: ['Cardiac|Superficial cardiac plexus', 'Vascular'] },
+    };
+
+    function buildChips() {
+      const tHost = document.getElementById('sel-target-chips');
+      const cHost = document.getElementById('sel-comparator-chips');
+      tHost.innerHTML = '';
+      cHost.innerHTML = '';
+      for (const sg of D.meta.group_order) {
+        const t = document.createElement('button');
+        t.className = 'sel-chip';
+        t.dataset.sg = sg;
+        t.textContent = sg;
+        tHost.appendChild(t);
+        const c = document.createElement('button');
+        c.className = 'sel-chip';
+        c.dataset.sg = sg;
+        c.textContent = sg;
+        cHost.appendChild(c);
+      }
+      tHost.addEventListener('click', e => {
+        const chip = e.target.closest('.sel-chip');
+        if (chip) toggleChip('target', chip.dataset.sg);
+      });
+      cHost.addEventListener('click', e => {
+        const chip = e.target.closest('.sel-chip');
+        if (chip) toggleChip('comparator', chip.dataset.sg);
+      });
+    }
+
+    function toggleChip(role, sg) {
+      const set = sel[role];
+      const otherRole = role === 'target' ? 'comparator' : 'target';
+      const otherSet = sel[otherRole];
+      const subEntries = [...set].filter(e => e.startsWith(sg + '|'));
+      const wasIn = set.has(sg) || subEntries.length > 0;
+      if (wasIn) {
+        set.delete(sg);
+        for (const e of subEntries) set.delete(e);
+      } else {
+        otherSet.delete(sg);
+        for (const e of [...otherSet].filter(e => e.startsWith(sg + '|'))) otherSet.delete(e);
+        set.add(sg);
+      }
+      sel.cursorX = null;
+      refreshChips();
+      render();
+    }
+
+    function refreshChips() {
+      const setRole = (role, host) => {
+        const set = sel[role];
+        const otherSet = sel[role === 'target' ? 'comparator' : 'target'];
+        host.querySelectorAll('.sel-chip').forEach(chip => {
+          const sg = chip.dataset.sg;
+          const inFull = set.has(sg);
+          const inAnySub = [...set].some(e => e.startsWith(sg + '|'));
+          const isActive = inFull || inAnySub;
+          chip.classList.toggle('target-active', role === 'target' && isActive);
+          chip.classList.toggle('comparator-active', role === 'comparator' && isActive);
+          const inOther = otherSet.has(sg) || [...otherSet].some(e => e.startsWith(sg + '|'));
+          chip.classList.toggle('disabled', inOther && !isActive);
+        });
+      };
+      setRole('target', document.getElementById('sel-target-chips'));
+      setRole('comparator', document.getElementById('sel-comparator-chips'));
+    }
+
+    function applyPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      sel.target = new Set(p.target);
+      sel.comparator = new Set(p.comparator);
+      sel.cursorX = null;
+      refreshChips();
+      render();
+    }
+
+    function inSet(set, group, subgroup) {
+      if (set.has(group)) return true;
+      if (set.has(`${group}|${subgroup}`)) return true;
+      return false;
+    }
+
+    function indicesForSide(side, set) {
+      const state = window.appState;
+      const b = D.branches;
+      const out = [];
+      for (let i = 0; i < b.subject.length; i++) {
+        if (b.side[i] !== side) continue;
+        if (b.sex[i] && !state.filters.sex.has(b.sex[i])) continue;
+        if (state.filters.subject && b.subject[i] !== state.filters.subject) continue;
+        if (!inSet(set, b.group[i], b.subgroup[i])) continue;
+        out.push(i);
+      }
+      return out;
+    }
+
+    function histogram(indices, binWidth, xMin, xMax, distKey) {
+      const nBins = Math.max(1, Math.ceil((xMax - xMin) / binWidth));
+      const counts = new Array(nBins).fill(0);
+      const b = D.branches;
+      for (const i of indices) {
+        const x = b[distKey][i];
+        if (x == null) continue;
+        const k = Math.floor((x - xMin) / binWidth);
+        if (k >= 0 && k < nBins) counts[k]++;
+      }
+      const centers = counts.map((_, k) => xMin + (k + 0.5) * binWidth);
+      return { centers, counts };
+    }
+
+    function coverage(indices, grid, distKey) {
+      const total = indices.length;
+      if (!total) return grid.map(() => 0);
+      const b = D.branches;
+      const xs = indices.map(i => b[distKey][i]).filter(v => v != null).sort((a, b) => a - b);
+      const out = new Array(grid.length);
+      for (let g = 0; g < grid.length; g++) {
+        const x = grid[g];
+        let lo = 0, hi = xs.length;
+        while (lo < hi) {
+          const mid = (lo + hi) >>> 1;
+          if (xs[mid] < x) lo = mid + 1;
+          else hi = mid;
+        }
+        const tail = xs.length - lo;
+        out[g] = 100 * tail / total;
+      }
+      return out;
+    }
+
+    function findPeak(grid, ix) {
+      if (!ix.length) return { x: null, i: 0 };
+      let bestIdx = 0;
+      for (let k = 1; k < ix.length; k++) {
+        if (ix[k] > ix[bestIdx]) bestIdx = k;
+      }
+      return { x: grid[bestIdx], i: ix[bestIdx] };
+    }
+
+    function tailCount(indices, cursorX, distKey) {
+      const b = D.branches;
+      let n = 0;
+      for (const i of indices) {
+        const x = b[distKey][i];
+        if (x != null && x >= cursorX) n++;
+      }
+      return n;
+    }
+
+    function render() {
+      const state = window.appState;
+      if (state.activePanel !== 'selectivity') return;
+
+      const useReg = state.distanceMode === 'registered';
+      const distKey = useReg ? 'd_reg' : 'd_raw';
+      const binWidth = sel.binWidth;
+      const xMin = 0;
+      const xMax = useReg ? 33 : 45;
+      const nGrid = Math.ceil((xMax - xMin) / binWidth) + 1;
+      const grid = Array.from({ length: nGrid }, (_, k) => xMin + k * binWidth);
+
+      const sides = [...state.filters.side].sort();
+      const showBoth = sides.length === 2;
+
+      const meta = document.getElementById('sel-card-meta');
+      const readout = document.getElementById('sel-readout');
+
+      if (sides.length === 0) {
+        Plotly.purge('fig-selectivity');
+        meta.textContent = 'Pick a target and a comparator';
+        readout.innerHTML = '<span class="sr-label">No side selected — turn on Left or Right in the filter bar.</span>';
+        return;
+      }
+      if (sel.target.size === 0 && sel.comparator.size === 0) {
+        Plotly.purge('fig-selectivity');
+        meta.textContent = 'Pick a target and a comparator';
+        readout.innerHTML = '<span class="sr-label">Pick a target and a comparator above (or use a preset).</span>';
+        return;
+      }
+
+      const sideData = {};
+      for (const side of sides) {
+        const tIdx = indicesForSide(side, sel.target);
+        const cIdx = indicesForSide(side, sel.comparator);
+        const tHist = histogram(tIdx, binWidth, xMin, xMax, distKey);
+        const cHist = histogram(cIdx, binWidth, xMin, xMax, distKey);
+        const tCov = coverage(tIdx, grid, distKey);
+        const cCov = coverage(cIdx, grid, distKey);
+        const ix = grid.map((_, k) => tCov[k] - cCov[k]);
+        const peak = findPeak(grid, ix);
+        sideData[side] = { tIdx, cIdx, tHist, cHist, tCov, cCov, ix, peak };
+      }
+
+      const cursorX = sel.cursorX != null ? sel.cursorX : (sideData[sides[0]].peak.x ?? 13);
+
+      const cInput = document.getElementById('sel-cursor-x');
+      if (document.activeElement !== cInput) cInput.value = cursorX.toFixed(1);
+
+      const tNames = [...sel.target].map(s => s.replace('|', ' / ')).join(' + ') || '(none)';
+      const cNames = [...sel.comparator].map(s => s.replace('|', ' / ')).join(' + ') || '(none)';
+      meta.innerHTML =
+        `<span style="color:${TGT_COLOR};font-weight:600;">${tNames}</span>` +
+        ` <span style="color:#bbb;">vs</span> ` +
+        `<span style="color:${CMP_COLOR};font-weight:600;">${cNames}</span>`;
+
+      const traces = [];
+      const shapes = [];
+      const annotations = [];
+
+      sides.forEach((side, sIdx) => {
+        const sd = sideData[side];
+        const xName = (showBoth && sIdx === 1) ? 'x2' : 'x';
+        const yPrefix = (showBoth && sIdx === 1) ? 4 : 0;
+        const yRuler  = `y${1 + yPrefix}`;
+        const yHist   = `y${2 + yPrefix}`;
+        const yCov    = `y${3 + yPrefix}`;
+        const ySel    = `y${4 + yPrefix}`;
+
+        traces.push({
+          x: [xMin, xMax], y: [0, 0],
+          xaxis: xName, yaxis: yRuler,
+          mode: 'lines', line: { color: '#111', width: 4 },
+          hoverinfo: 'skip', showlegend: false,
+        });
+        const clickXs = [];
+        for (let v = xMin; v <= xMax + 1e-9; v += 0.25) clickXs.push(+v.toFixed(2));
+        traces.push({
+          x: clickXs, y: clickXs.map(() => 0),
+          xaxis: xName, yaxis: yRuler,
+          mode: 'markers',
+          marker: { size: 18, opacity: 0.001 },
+          hoverinfo: 'x',
+          name: 'click',
+          showlegend: false,
+          meta: { rulerSide: side },
+        });
+        if (useReg) {
+          const a = D.anchors[side] && D.anchors[side].registered;
+          if (a) {
+            const lc = SIDE_LM_COLOR[side];
+            for (const k of ['U', 'M', 'D']) {
+              if (a[k] == null) continue;
+              shapes.push({
+                type: 'line', xref: xName, yref: yRuler,
+                x0: a[k], x1: a[k], y0: -0.7, y1: 0.7,
+                line: { color: lc, width: 2, dash: 'dash' },
+                layer: 'above',
+              });
+              annotations.push({
+                x: a[k], y: 0.85, xref: xName, yref: yRuler,
+                text: `<b>${LANDMARK_LABEL[k]}</b>`,
+                showarrow: false, yanchor: 'bottom',
+                font: { size: 10, color: lc },
+                bgcolor: 'rgba(255,255,255,0.95)', borderpad: 2,
+              });
+            }
+          }
+        }
+        if (showBoth) {
+          const titleX = sIdx === 0 ? 0.23 : 0.77;
+          annotations.push({
+            x: titleX, y: 1.02, xref: 'paper', yref: 'paper',
+            text: `<b>${side === 'L' ? 'Left' : 'Right'}</b>`,
+            showarrow: false, yanchor: 'bottom',
+            font: { size: 13, color: '#222', family: 'Inter' },
+          });
+        }
+
+        if (sd.tIdx.length) {
+          traces.push({
+            type: 'bar',
+            x: sd.tHist.centers, y: sd.tHist.counts,
+            xaxis: xName, yaxis: yHist,
+            name: 'Target', legendgroup: 'sel-target', showlegend: sIdx === 0,
+            marker: { color: TGT_FILL, line: { color: TGT_COLOR, width: 1 } },
+            width: binWidth,
+            hovertemplate: 'Target<br>x = %{x:.2f} cm<br>n = %{y}<extra></extra>',
+          });
+        }
+        if (sd.cIdx.length) {
+          traces.push({
+            type: 'bar',
+            x: sd.cHist.centers, y: sd.cHist.counts,
+            xaxis: xName, yaxis: yHist,
+            name: 'Comparator', legendgroup: 'sel-cmp', showlegend: sIdx === 0,
+            marker: { color: CMP_FILL, line: { color: CMP_COLOR, width: 1 } },
+            width: binWidth,
+            hovertemplate: 'Comparator<br>x = %{x:.2f} cm<br>n = %{y}<extra></extra>',
+          });
+        }
+
+        if (sd.tIdx.length) {
+          traces.push({
+            x: grid, y: sd.tCov,
+            xaxis: xName, yaxis: yCov,
+            mode: 'lines',
+            name: 'Target recruitment %', legendgroup: 'sel-target', showlegend: false,
+            fill: 'tozeroy', line: { color: TGT_COLOR, width: 2, shape: 'hv' },
+            fillcolor: TGT_FILL,
+            hovertemplate: 'Target recruitment<br>x = %{x:.2f} cm<br>%{y:.1f}%<extra></extra>',
+          });
+        }
+        if (sd.cIdx.length) {
+          traces.push({
+            x: grid, y: sd.cCov,
+            xaxis: xName, yaxis: yCov,
+            mode: 'lines',
+            name: 'Comparator recruitment %', legendgroup: 'sel-cmp', showlegend: false,
+            fill: 'tozeroy', line: { color: CMP_COLOR, width: 2, shape: 'hv' },
+            fillcolor: CMP_FILL,
+            hovertemplate: 'Comparator recruitment<br>x = %{x:.2f} cm<br>%{y:.1f}%<extra></extra>',
+          });
+        }
+
+        if (sd.tIdx.length || sd.cIdx.length) {
+          traces.push({
+            x: grid, y: sd.ix,
+            xaxis: xName, yaxis: ySel,
+            mode: 'lines',
+            name: 'i(x) = Target recruitment − Comparator recruitment', legendgroup: 'sel-i', showlegend: sIdx === 0,
+            line: { color: CURVE_COLOR, width: 2.5 },
+            hovertemplate: 'i(x)<br>x = %{x:.2f} cm<br>%{y:+.1f}%<extra></extra>',
+          });
+          shapes.push({
+            type: 'line', xref: xName, yref: ySel,
+            x0: xMin, x1: xMax, y0: 0, y1: 0,
+            line: { color: 'rgba(0,0,0,0.25)', width: 1 },
+            layer: 'below',
+          });
+          if (sd.peak.x != null) {
+            traces.push({
+              x: [sd.peak.x], y: [sd.peak.i],
+              xaxis: xName, yaxis: ySel,
+              mode: 'markers+text',
+              marker: { size: 11, color: PEAK_COLOR, symbol: 'circle', line: { color: '#fff', width: 2 } },
+              text: [`x* = ${sd.peak.x.toFixed(1)} · i = ${sd.peak.i.toFixed(0)}%`],
+              textposition: 'top center',
+              textfont: { size: 10.5, color: '#111' },
+              showlegend: false, hoverinfo: 'skip',
+            });
+            shapes.push({
+              type: 'line', xref: xName, yref: ySel,
+              x0: sd.peak.x, x1: sd.peak.x, y0: -100, y1: 100,
+              line: { color: PEAK_COLOR, width: 1, dash: 'dot' },
+              layer: 'below',
+            });
+          }
+        }
+
+        shapes.push({
+          type: 'line', xref: xName, yref: 'paper',
+          x0: cursorX, x1: cursorX, y0: 0.04, y1: 1,
+          line: { color: CURSOR_COLOR, width: 2 },
+          layer: 'above',
+        });
+      });
+
+      updateReadout(sides, sideData, cursorX, distKey);
+
+      const yRulerDom = [0.92, 1.0];
+      const yHistDom  = [0.66, 0.88];
+      const yCovDom   = [0.36, 0.60];
+      const ySelDom   = [0.04, 0.30];
+
+      const xtitle = useReg ? 'Registered distance (cm)' : 'Raw distance from top of nerve (cm)';
+
+      const layout = {
+        margin: { t: showBoth ? 36 : 22, r: 22, b: 44, l: 60 },
+        plot_bgcolor: '#fff', paper_bgcolor: '#fff',
+        shapes, annotations,
+        legend: { orientation: 'h', y: -0.10, x: 0.5, xanchor: 'center', font: { size: 11 }, bgcolor: 'rgba(255,255,255,0)' },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        barmode: 'overlay',
+      };
+
+      if (showBoth) {
+        layout.xaxis  = { domain: [0, 0.46],  anchor: 'y4', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', dtick: 5, zeroline: false };
+        layout.xaxis2 = { domain: [0.54, 1.0], anchor: 'y8', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', dtick: 5, zeroline: false };
+        layout.yaxis  = { domain: yRulerDom, anchor: 'x',  range: [-1, 1.5], showticklabels: false, showgrid: false, zeroline: false };
+        layout.yaxis2 = { domain: yHistDom,  anchor: 'x',  title: 'Count',   showgrid: true, gridcolor: '#f0f0f0', zeroline: false, rangemode: 'tozero' };
+        layout.yaxis3 = { domain: yCovDom,   anchor: 'x',  title: 'Recruitment %',  range: [0, 105], showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis4 = { domain: ySelDom,   anchor: 'x',  title: 'i(x) %',  range: [-100, 100], showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis5 = { domain: yRulerDom, anchor: 'x2', range: [-1, 1.5], showticklabels: false, showgrid: false, zeroline: false };
+        layout.yaxis6 = { domain: yHistDom,  anchor: 'x2', showgrid: true, gridcolor: '#f0f0f0', zeroline: false, rangemode: 'tozero', matches: 'y2' };
+        layout.yaxis7 = { domain: yCovDom,   anchor: 'x2', range: [0, 105], showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis8 = { domain: ySelDom,   anchor: 'x2', range: [-100, 100], showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+      } else {
+        layout.xaxis  = { domain: [0, 1], anchor: 'y4', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', dtick: 5, zeroline: false };
+        layout.yaxis  = { domain: yRulerDom, anchor: 'x', range: [-1, 1.5], showticklabels: false, showgrid: false, zeroline: false };
+        layout.yaxis2 = { domain: yHistDom,  anchor: 'x', title: 'Count',  showgrid: true, gridcolor: '#f0f0f0', zeroline: false, rangemode: 'tozero' };
+        layout.yaxis3 = { domain: yCovDom,   anchor: 'x', title: 'Recruitment %', range: [0, 105], showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+        layout.yaxis4 = { domain: ySelDom,   anchor: 'x', title: 'i(x) %', range: [-100, 100], showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
+      }
+
+      Plotly.react('fig-selectivity', traces, layout, {
+        responsive: true, displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+      });
+
+      const fig = document.getElementById('fig-selectivity');
+      if (!fig.__selClickBound) {
+        fig.on('plotly_click', (data) => {
+          if (!data || !data.points || !data.points.length) return;
+          const p = data.points[0];
+          if (p.data && p.data.meta && p.data.meta.rulerSide) {
+            sel.cursorX = +p.x;
+            render();
+          }
+        });
+        fig.__selClickBound = true;
+      }
+    }
+
+    function updateReadout(sides, sideData, cursorX, distKey) {
+      const el = document.getElementById('sel-readout');
+      const useReg = window.appState.distanceMode === 'registered';
+      const items = [];
+
+      items.push(`<span class="sr-item"><span class="sr-label">Cursor</span><span class="sr-value">${cursorX.toFixed(1)} cm</span></span>`);
+      items.push(`<span class="sr-item"><span class="sr-label">Distance</span><span class="sr-value">${useReg ? 'registered_v2' : 'raw'}</span></span>`);
+      items.push(`<span class="sr-item"><span class="sr-label">Bin</span><span class="sr-value">${sel.binWidth} cm</span></span>`);
+      items.push('<span class="sr-sep">·</span>');
+
+      for (const side of sides) {
+        const sd = sideData[side];
+        const sideLabel = side === 'L' ? 'L' : 'R';
+        const sideClass = side === 'L' ? 'sr-side-l' : 'sr-side-r';
+        const tTail = tailCount(sd.tIdx, cursorX, distKey);
+        const cTail = tailCount(sd.cIdx, cursorX, distKey);
+        const tPct = sd.tIdx.length ? 100 * tTail / sd.tIdx.length : 0;
+        const cPct = sd.cIdx.length ? 100 * cTail / sd.cIdx.length : 0;
+        const ix = tPct - cPct;
+
+        items.push(
+          `<span class="sr-item ${sideClass}">` +
+            `<span class="sr-label">${sideLabel} target</span>` +
+            `<span class="sr-value sr-target">${tTail}/${sd.tIdx.length} (${tPct.toFixed(0)}%)</span>` +
+          `</span>`
+        );
+        items.push(
+          `<span class="sr-item">` +
+            `<span class="sr-label">${sideLabel} comp</span>` +
+            `<span class="sr-value sr-comparator">${cTail}/${sd.cIdx.length} (${cPct.toFixed(0)}%)</span>` +
+          `</span>`
+        );
+        items.push(
+          `<span class="sr-item">` +
+            `<span class="sr-label">${sideLabel} i(x)</span>` +
+            `<span class="sr-value">${ix >= 0 ? '+' : ''}${ix.toFixed(1)}%</span>` +
+          `</span>`
+        );
+        if (sd.peak.x != null) {
+          items.push(
+            `<span class="sr-item">` +
+              `<span class="sr-label">${sideLabel} x*</span>` +
+              `<span class="sr-value">${sd.peak.x.toFixed(1)} cm · ${sd.peak.i.toFixed(0)}%</span>` +
+            `</span>`
+          );
+        }
+        items.push('<span class="sr-sep">·</span>');
+      }
+
+      el.innerHTML = items.join('');
+    }
+
+    function wireControls() {
+      document.getElementById('sel-preset').addEventListener('change', e => {
+        const k = e.target.value;
+        if (k) applyPreset(k);
+      });
+      document.getElementById('sel-cursor-x').addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (!isNaN(v)) {
+          sel.cursorX = v;
+          render();
+        }
+      });
+      document.getElementById('sel-bin-width').addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (!isNaN(v) && v >= 0.5 && v <= 5) {
+          sel.binWidth = v;
+          render();
+        }
+      });
+      document.getElementById('sel-snap-peak').addEventListener('click', () => {
+        sel.cursorX = null;
+        render();
+      });
+    }
+
+    window.addEventListener('state-changed', () => {
+      if (window.appState.activePanel === 'selectivity') render();
+    });
+    window.addEventListener('resize', () => {
+      const el = document.getElementById('fig-selectivity');
+      if (el && el.data) Plotly.Plots.resize(el);
+    });
+
+    buildChips();
+    wireControls();
+    applyPreset('A');
+    document.getElementById('sel-preset').value = 'A';
+    if (window.appState && window.appState.activePanel === 'selectivity') render();
+  })();
+  </script>
+
+</body>
+</html>

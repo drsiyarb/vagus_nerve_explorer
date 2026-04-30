@@ -2179,34 +2179,36 @@
       const idx = filteredBranchIndices(state);
       const lmIdx = filteredLandmarkIndices(state);
 
-      const sideOrder = ['R', 'L'];
+      const sideOrder = ['L', 'R'].filter(s => state.filters.side.has(s));
+      const sexOrder = ['F', 'M'].filter(s => state.filters.sex.has(s));
+
       const donorsBySex = { F: [], M: [] };
       for (const d of D.donors) {
         const s = (d.Sex || '').toUpperCase();
         if (donorsBySex[s]) donorsBySex[s].push(d.id);
       }
-      const sexGroups = [];
-      if (state.filters.sex.has('F')) sexGroups.push({ sex: 'F', ids: donorsBySex.F.slice().sort() });
-      if (state.filters.sex.has('M')) sexGroups.push({ sex: 'M', ids: donorsBySex.M.slice().sort() });
 
       const laneSet = new Map();
       const laneOrder = [];
+      const sideBlockBounds = [];
+      const sexSubBlockBounds = [];
       let lanePtr = 0;
-      const sexBlockBounds = [];
-      for (const grp of sexGroups) {
-        const start = lanePtr;
-        for (const id of grp.ids) {
-          for (const side of sideOrder) {
-            if (!state.filters.side.has(side)) continue;
+
+      for (const side of sideOrder) {
+        const sideStart = lanePtr;
+        for (const sex of sexOrder) {
+          const subStart = lanePtr;
+          const ids = donorsBySex[sex].slice().sort();
+          for (const id of ids) {
             const hasBranch = idx.some(i => b.subject[i] === id && b.side[i] === side);
             if (!hasBranch) continue;
-            const key = `${id}|${side}`;
-            laneSet.set(key, lanePtr);
-            laneOrder.push({ subject: id, side, lane: lanePtr, sex: grp.sex });
+            laneSet.set(`${id}|${side}`, lanePtr);
+            laneOrder.push({ subject: id, side, sex, lane: lanePtr });
             lanePtr++;
           }
+          if (lanePtr > subStart) sexSubBlockBounds.push({ side, sex, start: subStart, end: lanePtr - 1 });
         }
-        if (lanePtr > start) sexBlockBounds.push({ sex: grp.sex, start, end: lanePtr - 1 });
+        if (lanePtr > sideStart) sideBlockBounds.push({ side, start: sideStart, end: lanePtr - 1 });
       }
       const nLanes = lanePtr;
 
@@ -2236,8 +2238,8 @@
       const shapes = [];
       let landmarkAnnotations = [];
 
-      // Per-sex block backgrounds
-      for (const blk of sexBlockBounds) {
+      // Per-sex sub-block backgrounds
+      for (const blk of sexSubBlockBounds) {
         shapes.push({
           type: 'rect', xref: 'x', yref: 'y',
           x0: xLeft, x1: xRight,
@@ -2254,17 +2256,30 @@
           fillcolor: 'rgba(0,0,0,0.025)', line: { width: 0 }, layer: 'below',
         });
       }
-      // Hard divider between F and M blocks
-      if (sexBlockBounds.length === 2) {
-        const dividerY = sexBlockBounds[0].end + 0.5;
+      // Hard divider between side blocks
+      if (sideBlockBounds.length === 2) {
+        const dividerY = sideBlockBounds[0].end + 0.5;
         shapes.push({
           type: 'line', xref: 'x', yref: 'y',
           x0: xLeft, x1: xRight, y0: dividerY, y1: dividerY,
           line: { color: 'rgba(0,0,0,0.18)', width: 1.2 },
         });
       }
-      // Sex group labels at left edge
-      for (const blk of sexBlockBounds) {
+      // Thinner dividers between sex sub-blocks within each side
+      for (let i = 0; i < sexSubBlockBounds.length - 1; i++) {
+        const curr = sexSubBlockBounds[i];
+        const next = sexSubBlockBounds[i + 1];
+        if (curr.side === next.side) {
+          const dividerY = curr.end + 0.5;
+          shapes.push({
+            type: 'line', xref: 'x', yref: 'y',
+            x0: xLeft, x1: xRight, y0: dividerY, y1: dividerY,
+            line: { color: 'rgba(0,0,0,0.08)', width: 0.6 },
+          });
+        }
+      }
+      // Sex sub-group color stripes at left edge
+      for (const blk of sexSubBlockBounds) {
         shapes.push({
           type: 'rect', xref: 'paper', yref: 'y',
           x0: 0, x1: 0.012,
@@ -2416,13 +2431,14 @@
       });
       const heightPx = Math.max(560, nLanes * 18 + 110);
 
-      for (const blk of sexBlockBounds) {
+      const SIDE_LM_COLOR = { L: '#b91c1c', R: '#1d4ed8' };
+      for (const blk of sideBlockBounds) {
         const yMid = (blk.start + blk.end) / 2;
         landmarkAnnotations.push({
           x: 1.005, y: yMid, xref: 'paper', yref: 'y',
-          text: `<b>${blk.sex === 'F' ? 'Female' : 'Male'}</b><br><span style="font-size:10px;color:#888">n=${blk.end - blk.start + 1}</span>`,
+          text: `<b>${blk.side === 'L' ? 'Left' : 'Right'}</b><br><span style="font-size:10px;color:#888">n=${blk.end - blk.start + 1}</span>`,
           showarrow: false, xanchor: 'left', align: 'left',
-          font: { size: 12, color: SEX_COLOR[blk.sex] },
+          font: { size: 12, color: SIDE_LM_COLOR[blk.side] },
         });
       }
 
