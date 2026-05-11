@@ -396,6 +396,92 @@
     color: #fff;
     border-color: #06b6d4;
   }
+  /* Partial: some but not all subgroups in this role */
+  .sel-chip.target-partial {
+    background: rgba(236,72,153,0.10);
+    border-color: #ec4899;
+    color: #ec4899;
+  }
+  .sel-chip.comparator-partial {
+    background: rgba(6,182,212,0.10);
+    border-color: #06b6d4;
+    color: #06b6d4;
+  }
+  /* Chip becomes a two-part button: name + chevron */
+  .sel-chip { padding: 0; display: inline-flex; align-items: stretch; }
+  .sel-chip-name { padding: 3px 9px; }
+  .sel-chip-chevron {
+    padding: 3px 7px;
+    border-left: 1px solid #ddd;
+    color: #888;
+    font-size: 10px;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .sel-chip-chevron:hover { background: rgba(0,0,0,0.08); }
+  .sel-chip.target-active .sel-chip-chevron,
+  .sel-chip.comparator-active .sel-chip-chevron {
+    border-left-color: rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.9);
+  }
+  .sel-chip.target-active .sel-chip-chevron:hover,
+  .sel-chip.comparator-active .sel-chip-chevron:hover { background: rgba(255,255,255,0.18); }
+  .sel-chip.target-partial .sel-chip-chevron { border-left-color: rgba(236,72,153,0.35); color: #ec4899; }
+  .sel-chip.comparator-partial .sel-chip-chevron { border-left-color: rgba(6,182,212,0.35); color: #06b6d4; }
+  /* Open chevron gets a subtle tint matching the cluster below */
+  .sel-chip-chevron.open {
+    background: var(--sg-tint, rgba(0,0,0,0.06));
+    color: var(--sg-color, #333);
+  }
+
+  /* Second-row subgroup bar — appears only when at least one chevron is open */
+  .sel-subgroup-bar {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: #fafafa;
+    border: 1px dashed #d4d4d4;
+    border-radius: 8px;
+  }
+  .sel-subgroup-bar.has-expanded { display: flex; }
+  .sel-sub-cluster {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--sg-tint, rgba(0,0,0,0.03));
+    border: 1px solid var(--sg-border, #e5e5e5);
+  }
+  .sel-sub-cluster-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sg-color, #555);
+    margin-right: 2px;
+  }
+  .sel-sub-chip {
+    font-size: 10.5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .sel-sub-chip:hover:not(.target-active):not(.comparator-active):not(.disabled) { background: #f3f3f3; }
+  .sel-sub-chip.target-active { background: #ec4899; color: #fff; border-color: #ec4899; }
+  .sel-sub-chip.comparator-active { background: #06b6d4; color: #fff; border-color: #06b6d4; }
+  .sel-sub-chip.disabled { opacity: 0.45; cursor: not-allowed; }
+
   .sel-input {
     font: inherit;
     font-size: 12px;
@@ -910,13 +996,15 @@
                 </div>
 
                 <div class="sel-block flex">
-                  <span class="sel-block-label"><span class="sel-target-tag">Target</span> — click to add/remove</span>
+                  <span class="sel-block-label"><span class="sel-target-tag">Target</span> — click name to toggle whole group · ▾ to pick subgroups</span>
                   <div class="sel-chips" id="sel-target-chips"></div>
+                  <div class="sel-subgroup-bar" id="sel-target-subbar"></div>
                 </div>
 
                 <div class="sel-block flex">
-                  <span class="sel-block-label"><span class="sel-comp-tag">Comparator</span> — click to add/remove</span>
+                  <span class="sel-block-label"><span class="sel-comp-tag">Comparator</span> — click name to toggle whole group · ▾ to pick subgroups</span>
                   <div class="sel-chips" id="sel-comparator-chips"></div>
+                  <div class="sel-subgroup-bar" id="sel-comparator-subbar"></div>
                 </div>
 
                 <div class="sel-block">
@@ -2935,12 +3023,49 @@
       D: 'Sup. Border of Clavicle',
     };
 
+    // Internal representation: sel.target and sel.comparator only ever contain
+    // fully-qualified 'group|subgroup' keys. Whole-supergroup selections are
+    // always expanded to all their subs. This makes mutual exclusion + split-
+    // across-roles trivial (a single sub key lives in at most one role's set).
     const sel = {
       target: new Set(),
       comparator: new Set(),
+      // Which supergroups have their subgroup tray open, per role
+      expanded: { target: new Set(), comparator: new Set() },
       cursorX: null,
       binWidth: 1.0,
     };
+
+    // Manuscript-canonical supergroup color palette (drives sub-cluster tint).
+    const SG_COLORS = {
+      'Sympathetic':       '#e41a1c',
+      'Muscular':          '#377eb8',
+      'Vascular':          '#4daf4a',
+      'Cardiac':           '#984ea3',
+      'Pulmonary':         '#ff7f00',
+      'Esophageal':        '#a65628',
+      'Multiple Targets':  '#999999',
+    };
+    function tintFor(hex, alpha) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    // Subgroup lookup derived from the data: { supergroup: [sub, sub, ...] }
+    const groupSubs = (function () {
+      const acc = {};
+      for (const sg of D.meta.group_order) acc[sg] = new Set();
+      const b = D.branches;
+      for (let i = 0; i < b.subject.length; i++) {
+        const g = b.group[i], s = b.subgroup[i];
+        if (g && s && acc[g]) acc[g].add(s);
+      }
+      const out = {};
+      for (const g of Object.keys(acc)) out[g] = [...acc[g]].sort();
+      return out;
+    })();
 
     const PRESETS = {
       A: { target: ['Cardiac', 'Pulmonary', 'Esophageal'],          comparator: ['Sympathetic', 'Muscular', 'Vascular'] },
@@ -2951,78 +3076,204 @@
            comparator: ['Cardiac|Superficial cardiac plexus', 'Vascular'] },
     };
 
-    function buildChips() {
-      const tHost = document.getElementById('sel-target-chips');
-      const cHost = document.getElementById('sel-comparator-chips');
-      tHost.innerHTML = '';
-      cHost.innerHTML = '';
-      for (const sg of D.meta.group_order) {
-        const t = document.createElement('button');
-        t.className = 'sel-chip';
-        t.dataset.sg = sg;
-        t.textContent = sg;
-        tHost.appendChild(t);
-        const c = document.createElement('button');
-        c.className = 'sel-chip';
-        c.dataset.sg = sg;
-        c.textContent = sg;
-        cHost.appendChild(c);
+    // Expand a preset-style key list ('Cardiac' or 'Cardiac|Deep CP') into a
+    // flat Set of fully-qualified 'g|s' keys.
+    function expandKeys(arr) {
+      const out = new Set();
+      for (const k of arr) {
+        if (k.includes('|')) {
+          out.add(k);
+        } else {
+          for (const s of (groupSubs[k] || [])) out.add(k + '|' + s);
+        }
       }
-      tHost.addEventListener('click', e => {
-        const chip = e.target.closest('.sel-chip');
-        if (chip) toggleChip('target', chip.dataset.sg);
-      });
-      cHost.addEventListener('click', e => {
-        const chip = e.target.closest('.sel-chip');
-        if (chip) toggleChip('comparator', chip.dataset.sg);
-      });
+      return out;
     }
 
-    function toggleChip(role, sg) {
+    // How many subs of supergroup g are currently in `set`?
+    function subsInRole(set, g) {
+      let n = 0;
+      for (const s of (groupSubs[g] || [])) if (set.has(g + '|' + s)) n++;
+      return n;
+    }
+
+    // ----- toggle handlers ------------------------------------------------
+    function toggleSupergroupRole(role, g) {
       const set = sel[role];
-      const otherRole = role === 'target' ? 'comparator' : 'target';
-      const otherSet = sel[otherRole];
-      const subEntries = [...set].filter(e => e.startsWith(sg + '|'));
-      const wasIn = set.has(sg) || subEntries.length > 0;
-      if (wasIn) {
-        set.delete(sg);
-        for (const e of subEntries) set.delete(e);
+      const otherSet = sel[role === 'target' ? 'comparator' : 'target'];
+      const subs = groupSubs[g] || [];
+      if (!subs.length) return;
+      const inHere = subsInRole(set, g);
+      if (inHere === subs.length) {
+        // Whole supergroup is in this role — clicking removes everything.
+        for (const s of subs) set.delete(g + '|' + s);
       } else {
-        otherSet.delete(sg);
-        for (const e of [...otherSet].filter(e => e.startsWith(sg + '|'))) otherSet.delete(e);
-        set.add(sg);
+        // Take the whole supergroup for this role; pull any of its subs out of the other role.
+        for (const s of subs) {
+          otherSet.delete(g + '|' + s);
+          set.add(g + '|' + s);
+        }
       }
       sel.cursorX = null;
-      refreshChips();
+      refreshAll();
       render();
     }
 
-    function refreshChips() {
-      const setRole = (role, host) => {
-        const set = sel[role];
-        const otherSet = sel[role === 'target' ? 'comparator' : 'target'];
-        host.querySelectorAll('.sel-chip').forEach(chip => {
-          const sg = chip.dataset.sg;
-          const inFull = set.has(sg);
-          const inAnySub = [...set].some(e => e.startsWith(sg + '|'));
-          const isActive = inFull || inAnySub;
-          chip.classList.toggle('target-active', role === 'target' && isActive);
-          chip.classList.toggle('comparator-active', role === 'comparator' && isActive);
-          const inOther = otherSet.has(sg) || [...otherSet].some(e => e.startsWith(sg + '|'));
-          chip.classList.toggle('disabled', inOther && !isActive);
-        });
-      };
-      setRole('target', document.getElementById('sel-target-chips'));
-      setRole('comparator', document.getElementById('sel-comparator-chips'));
+    function toggleSubgroupRole(role, g, s) {
+      const set = sel[role];
+      const otherSet = sel[role === 'target' ? 'comparator' : 'target'];
+      const k = g + '|' + s;
+      if (set.has(k)) {
+        set.delete(k);
+      } else {
+        otherSet.delete(k);
+        set.add(k);
+      }
+      sel.cursorX = null;
+      refreshAll();
+      render();
+    }
+
+    function toggleExpanded(role, g) {
+      const eset = sel.expanded[role];
+      if (eset.has(g)) eset.delete(g);
+      else eset.add(g);
+      refreshAll();
+    }
+
+    // ----- builders -------------------------------------------------------
+    function buildChips() {
+      buildRoleChips('target', document.getElementById('sel-target-chips'));
+      buildRoleChips('comparator', document.getElementById('sel-comparator-chips'));
+      // Wire stable parent listeners for the sub-bars (children re-render on every refresh).
+      document.getElementById('sel-target-subbar').addEventListener('click', e => onSubBarClick('target', e));
+      document.getElementById('sel-comparator-subbar').addEventListener('click', e => onSubBarClick('comparator', e));
+      refreshAll();
+    }
+
+    function buildRoleChips(role, host) {
+      host.innerHTML = '';
+      for (const g of D.meta.group_order) {
+        const chip = document.createElement('button');
+        chip.className = 'sel-chip';
+        chip.dataset.sg = g;
+        const name = document.createElement('span');
+        name.className = 'sel-chip-name';
+        name.textContent = g;
+        name.dataset.action = 'toggle-sg';
+        const chev = document.createElement('span');
+        chev.className = 'sel-chip-chevron';
+        chev.textContent = '▾';
+        chev.dataset.action = 'toggle-tray';
+        chip.appendChild(name);
+        chip.appendChild(chev);
+        host.appendChild(chip);
+      }
+      host.addEventListener('click', e => onChipsClick(role, e));
+    }
+
+    function onChipsClick(role, e) {
+      const chev = e.target.closest('.sel-chip-chevron');
+      if (chev) {
+        const chip = chev.closest('.sel-chip');
+        toggleExpanded(role, chip.dataset.sg);
+        return;
+      }
+      const name = e.target.closest('.sel-chip-name');
+      if (name) {
+        const chip = name.closest('.sel-chip');
+        toggleSupergroupRole(role, chip.dataset.sg);
+        return;
+      }
+    }
+
+    function onSubBarClick(role, e) {
+      const sub = e.target.closest('.sel-sub-chip');
+      if (!sub) return;
+      if (sub.classList.contains('disabled')) return;
+      toggleSubgroupRole(role, sub.dataset.sg, sub.dataset.sub);
+    }
+
+    function refreshAll() {
+      refreshSupergroupChips('target',     document.getElementById('sel-target-chips'));
+      refreshSupergroupChips('comparator', document.getElementById('sel-comparator-chips'));
+      buildSubBar('target',     document.getElementById('sel-target-subbar'));
+      buildSubBar('comparator', document.getElementById('sel-comparator-subbar'));
+    }
+
+    function refreshSupergroupChips(role, host) {
+      const set = sel[role];
+      const expanded = sel.expanded[role];
+      host.querySelectorAll('.sel-chip').forEach(chip => {
+        const g = chip.dataset.sg;
+        const subs = groupSubs[g] || [];
+        const inHere = subsInRole(set, g);
+        chip.classList.remove('target-active', 'comparator-active', 'target-partial', 'comparator-partial');
+        if (inHere === subs.length && subs.length > 0) {
+          chip.classList.add(role + '-active');
+        } else if (inHere > 0) {
+          chip.classList.add(role + '-partial');
+        }
+        const chev = chip.querySelector('.sel-chip-chevron');
+        if (chev) {
+          const isOpen = expanded.has(g);
+          chev.classList.toggle('open', isOpen);
+          chev.textContent = isOpen ? '▴' : '▾';
+          const c = SG_COLORS[g] || '#666';
+          chev.style.setProperty('--sg-tint', tintFor(c, 0.18));
+          chev.style.setProperty('--sg-color', c);
+        }
+      });
+    }
+
+    function buildSubBar(role, host) {
+      host.innerHTML = '';
+      const expanded = sel.expanded[role];
+      if (!expanded.size) { host.classList.remove('has-expanded'); return; }
+      host.classList.add('has-expanded');
+      const set = sel[role];
+      const otherSet = sel[role === 'target' ? 'comparator' : 'target'];
+      for (const g of D.meta.group_order) {
+        if (!expanded.has(g)) continue;
+        const subs = groupSubs[g] || [];
+        if (!subs.length) continue;
+        const cluster = document.createElement('div');
+        cluster.className = 'sel-sub-cluster';
+        const c = SG_COLORS[g] || '#666';
+        cluster.style.setProperty('--sg-color',  c);
+        cluster.style.setProperty('--sg-tint',   tintFor(c, 0.10));
+        cluster.style.setProperty('--sg-border', tintFor(c, 0.38));
+        const label = document.createElement('span');
+        label.className = 'sel-sub-cluster-label';
+        label.textContent = g;
+        cluster.appendChild(label);
+        for (const s of subs) {
+          const sub = document.createElement('button');
+          sub.className = 'sel-sub-chip';
+          sub.dataset.sg = g;
+          sub.dataset.sub = s;
+          sub.textContent = s;
+          const k = g + '|' + s;
+          if (set.has(k)) sub.classList.add(role + '-active');
+          else if (otherSet.has(k)) sub.classList.add('disabled');
+          cluster.appendChild(sub);
+        }
+        host.appendChild(cluster);
+      }
     }
 
     function applyPreset(key) {
       const p = PRESETS[key];
       if (!p) return;
-      sel.target = new Set(p.target);
-      sel.comparator = new Set(p.comparator);
+      sel.target = expandKeys(p.target);
+      sel.comparator = expandKeys(p.comparator);
+      sel.expanded.target.clear();
+      sel.expanded.comparator.clear();
+      // Auto-expand any supergroup that has a specifically-named subgroup in the preset
+      for (const k of p.target)     if (k.includes('|')) sel.expanded.target.add(k.split('|')[0]);
+      for (const k of p.comparator) if (k.includes('|')) sel.expanded.comparator.add(k.split('|')[0]);
       sel.cursorX = null;
-      refreshChips();
+      refreshAll();
       render();
     }
 
