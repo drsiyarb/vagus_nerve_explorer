@@ -13,15 +13,27 @@ This repository contains:
 ## Folder structure
 
 ```
-vagus_atlas_github_release/
+vagus_nerve_explorer/
 ├── README.md                                     (this file)
-├── paper_figures_reproducible.ipynb              (copy)
-├── vagus_atlas_dataset.xlsx               (copy)
-├── vagus_segment_scaffold.xlsx                 (copy)
+├── paper_figures_reproducible.ipynb              (reproducible notebook for every figure / table)
+├── vagus_atlas_dataset.xlsx                      (published dataset)
+├── vagus_segment_scaffold.xlsx                   (registration scaffold)
+├── vagus_atlas_full.xlsx                         (full merged dataset incl. landmarks)
+├── vagus_atlas_analysis.xlsx                     (notebook output — analysis-ready)
+├── overview_table_registered_v2_tiefix.csv       (per-nerve summary)
+├── supp_table_S7_noncanonical_landmark_ordering.csv
+├── Fig2_group_distributions/                     (PNG + SVG + TIFF for each main figure)
+├── Fig3_subway_map/
+├── Fig4_subgroup_violins/
+├── Fig5_regional_divisions/
+├── Fig6_branch_free_intervals/
+├── Fig7_selectivity/
+├── Tables/                                       (Table 1)
+├── Supplementary_tables/                         (Supplementary Tables 1–6)
 └── interactive_explorer/
-    ├── vagus_atlas_explorer.html                 (copy)
-    ├── vagus_atlas_data.js                       (copy — generated artifact, included so explorer works without re-running build script)
-    └── build_atlas_data.py                       (copy — script to regenerate vagus_atlas_data.js from the analysis output)
+    ├── vagus_atlas_explorer.html                 (open in browser — no Python required)
+    ├── vagus_atlas_data.js                       (generated artifact, included so explorer works out-of-the-box)
+    └── build_atlas_data.py                       (rebuilds vagus_atlas_data.js from vagus_atlas_analysis.xlsx)
 ```
 
 ## Reproducing the paper figures

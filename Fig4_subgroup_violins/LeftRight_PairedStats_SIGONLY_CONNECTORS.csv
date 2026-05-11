@@ -1,26 +1,26 @@
-Subgroup,n_pairs_paired,p_paired,q_fdr_bh_paired,p_bonf_paired,delta_median_paired_L_minus_R,connector_drawn
-Superior Cervical Ganglion,21,0.9728584289550781,0.9728584289550781,1.0,-0.16102694514036653,False
-Sympathetic Trunk,4,,,,,False
-Pharyngeal,14,0.463134765625,0.668972439236111,1.0,-0.09117670739270822,False
-Laryngeal (SLN),27,0.1414058655500412,0.2813588891710554,1.0,-0.33380174947737196,False
-Ansa Cervicalis,4,,,,,False
-Laryngeal,2,,,,,False
-Laryngeal (RLN),27,1.4901161193847656e-08,1.9371509552001953e-07,1.9371509552001953e-07,5.2606204159824905,True
-Internal Carotid Artery,8,0.3125,0.5078125,1.0,0.8667241167794328,False
-Carotid Sinus,3,,,,,False
-Carotid Bifurcation,5,,,,,False
-Multiple Branches To Carotid Artery,7,0.6875,0.8040364583333333,1.0,-0.7776947102181864,False
-Common Carotid,13,0.0478515625,0.1244140625,0.6220703125,2.8665627886300182,False
-Internal Jugular Vein,8,0.7421875,0.8040364583333333,1.0,1.4770858250712084,False
-General Vascular,3,,,,,False
-Aorta,0,,,,,False
-Superficial Cardiac Plexus,5,,,,,False
-Deep Cardiac Plexus,4,,,,,False
-General Cardiac,3,,,,,False
-Cardiopulmonary,23,2.384185791015625e-07,1.5497207641601562e-06,3.0994415283203125e-06,4.031185266689089,True
-Pulmonary,16,0.0155029296875,0.05078125,0.2015380859375,1.7161685995028844,False
-Cardiopulmonary (Esophageal),1,,,,,False
-General Esophageal,8,0.015625,0.05078125,0.203125,3.1819291221633925,False
-Pulmonary (Esophageal),11,0.6376953125,0.8040364583333333,1.0,-0.3224194593000078,False
-Cardiac (Esophageal),2,,,,,False
-Esophageal Plexus,24,0.15150094032287598,0.2813588891710554,1.0,0.7917605858349219,False
+Subgroup,Supergroup,n_pairs_paired,p_paired,m_block,p_bonf_within_group_paired,delta_median_paired_L_minus_R,connector_drawn
+Superior Cervical Ganglion,Sympathetic,21,0.9728584289550781,1,0.9728584289550781,-0.16102694514036653,False
+Sympathetic Trunk,Sympathetic,4,,1,,,False
+Pharyngeal,Muscular,14,0.463134765625,3,1.0,-0.09117670739270822,False
+Laryngeal (SLN),Muscular,27,0.1414058655500412,3,0.4242175966501236,-0.33380174947737196,False
+Ansa Cervicalis,Muscular,4,,3,,,False
+Laryngeal,Muscular,2,,3,,,False
+Laryngeal (RLN),Muscular,27,1.4901161193847656e-08,3,4.470348358154297e-08,5.2606204159824905,True
+Internal Carotid Artery,Vascular,8,0.3125,4,1.0,0.8667241167794328,False
+Carotid Sinus,Vascular,3,,4,,,False
+Carotid Bifurcation,Vascular,5,,4,,,False
+Multiple Branches To Carotid Artery,Vascular,7,0.6875,4,1.0,-0.7776947102181864,False
+Common Carotid,Vascular,13,0.0478515625,4,0.19140625,2.8665627886300182,False
+Internal Jugular Vein,Vascular,8,0.7421875,4,1.0,1.4770858250712084,False
+General Vascular,Vascular,3,,4,,,False
+Aorta,Vascular,0,,4,,,False
+Superficial Cardiac Plexus,Cardiac,5,,1,,,False
+Deep Cardiac Plexus,Cardiac,4,,1,,,False
+General Cardiac,Cardiac,3,,1,,,False
+Cardiopulmonary,Cardiac,23,2.384185791015625e-07,1,2.384185791015625e-07,4.031185266689089,True
+Pulmonary,Pulmonary,16,0.0155029296875,1,0.0155029296875,1.7161685995028844,True
+Cardiopulmonary (Esophageal),Esophageal,1,,3,,,False
+General Esophageal,Esophageal,8,0.015625,3,0.046875,3.1819291221633925,True
+Pulmonary (Esophageal),Esophageal,11,0.6376953125,3,1.0,-0.3224194593000078,False
+Cardiac (Esophageal),Esophageal,2,,3,,,False
+Esophageal Plexus,Esophageal,24,0.15150094032287598,3,0.45450282096862793,0.7917605858349219,False
