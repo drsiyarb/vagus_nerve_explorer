@@ -14,8 +14,9 @@ venv/
 Thumbs.db
 desktop.ini
 
-# Notebook backup snapshots created during figure restructure
+# Backup snapshots created during figure restructure (notebook + HTML)
 *__backup_before_*.ipynb
+*__backup_before_*.html
 
 # Stale git lock artifacts (from interrupted operations on Windows mounts)
 .git/index.lock*
