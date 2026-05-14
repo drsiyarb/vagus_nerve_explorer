@@ -216,14 +216,89 @@
   }
   .chip.sg-chip {
     border-left-width: 4px;
+    padding: 0;
+    display: inline-flex;
+    align-items: stretch;
   }
+  .sg-chip-name {
+    padding: 4px 10px;
+  }
+  .sg-chip-chevron {
+    padding: 4px 7px;
+    border-left: 1px solid rgba(0,0,0,0.10);
+    color: #888;
+    font-size: 9px;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .sg-chip-chevron:hover { background: rgba(0,0,0,0.08); }
   .chip.sg-chip.active {
     background: var(--sg-color);
     border-color: var(--sg-color);
     color: #fff;
   }
-  .chip.sg-chip:not(.active) {
+  .chip.sg-chip.active .sg-chip-chevron {
+    border-left-color: rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.9);
+  }
+  .chip.sg-chip.active .sg-chip-chevron:hover { background: rgba(255,255,255,0.18); }
+  .chip.sg-chip.partial {
+    background: rgba(0,0,0,0.02);
+    color: var(--sg-color);
+  }
+  .chip.sg-chip.partial .sg-chip-chevron { color: var(--sg-color); border-left-color: rgba(0,0,0,0.18); }
+  .chip.sg-chip:not(.active):not(.partial) {
     border-left-color: var(--sg-color);
+  }
+
+  /* Subgroup picker bar — appears below the filter bar when chevrons are open */
+  .filter-subbar {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 16px 10px 16px;
+    padding: 6px 10px;
+    background: #fafafa;
+    border: 1px dashed #d4d4d4;
+    border-radius: 8px;
+  }
+  .filter-subbar.has-expanded { display: flex; }
+  .fsb-cluster {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--sg-tint, rgba(0,0,0,0.03));
+    border: 1px solid var(--sg-border, #e5e5e5);
+  }
+  .fsb-cluster-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sg-color, #555);
+    margin-right: 2px;
+  }
+  .fsb-sub-chip {
+    font-size: 10.5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .fsb-sub-chip:hover:not(.active) { background: #f3f3f3; }
+  .fsb-sub-chip.active {
+    background: var(--sg-color, #111);
+    color: #fff;
+    border-color: var(--sg-color, #111);
   }
 
   .filter-group select {
@@ -766,6 +841,78 @@
   .vio-pool-chip.editing .vio-pool-chip-remove:hover { background: rgba(255,255,255,0.32); }
 
   /* ==========================================================
+     SETTINGS DROPDOWN (sidebar)
+     ========================================================== */
+  .settings-section { position: relative; }
+  .settings-toggle {
+    display: flex; align-items: center; gap: 7px;
+    width: 100%;
+    padding: 8px 10px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    color: #444;
+    text-align: left;
+  }
+  .settings-toggle:hover { background: #f5f5f5; }
+  .settings-toggle .gear { font-size: 14px; line-height: 1; }
+  .settings-toggle .label { font-weight: 500; }
+  .settings-toggle .chev {
+    margin-left: auto; font-size: 10px; color: #888;
+    transition: transform 0.15s;
+  }
+  .settings-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .settings-toggle[aria-expanded="true"] {
+    background: #111; color: #fff; border-color: #111;
+  }
+  .settings-toggle[aria-expanded="true"] .chev { color: #fff; }
+
+  .settings-dropdown {
+    display: none;
+    position: absolute;
+    left: 0; right: 0;
+    top: calc(100% + 6px);
+    z-index: 50;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    padding: 4px 14px;
+  }
+  .settings-dropdown.open { display: block; }
+  .settings-row {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+  }
+  .settings-row-control { display: flex; gap: 4px; }
+  .settings-btn {
+    flex: 1;
+    font: inherit; font-size: 11px;
+    padding: 5px 9px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #444;
+  }
+  .settings-btn:hover { background: #f3f3f3; }
+  .settings-btn.active {
+    background: #111; color: #fff; border-color: #111;
+  }
+
+  /* ==========================================================
      DEBUG WIDGET (development only — remove later)
      ========================================================== */
   #debug-state {
@@ -810,14 +957,6 @@
     <aside class="sidebar">
 
       <div class="side-section">
-        <h4>Distance</h4>
-        <div class="toggle-row" id="toggle-distance-mode">
-          <button class="toggle-btn active" data-value="registered">Registered</button>
-          <button class="toggle-btn" data-value="raw">Raw</button>
-        </div>
-      </div>
-
-      <div class="side-section">
         <h4>Panel</h4>
         <div class="panel-nav" id="panel-nav">
           <button class="nav-item active" data-panel="individual">
@@ -832,6 +971,34 @@
           <button class="nav-item" data-panel="selectivity">
             <span class="nav-dot"></span><span>Selectivity</span>
           </button>
+        </div>
+      </div>
+
+      <div class="side-section settings-section">
+        <button class="settings-toggle" id="settings-toggle" aria-expanded="false" aria-haspopup="true">
+          <span class="gear" aria-hidden="true">⚙</span>
+          <span class="label">Settings</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </button>
+        <div class="settings-dropdown" id="settings-dropdown" role="menu">
+
+          <div class="settings-row">
+            <span class="settings-row-label">Distance</span>
+            <div class="settings-row-control toggle-row" id="toggle-distance-mode">
+              <button class="settings-btn toggle-btn active" data-value="registered">Registered</button>
+              <button class="settings-btn toggle-btn" data-value="raw">Raw</button>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-row-label">App font size</span>
+            <div class="settings-row-control" data-setting="font-size">
+              <button class="settings-btn" data-value="sm">S</button>
+              <button class="settings-btn active" data-value="md">M</button>
+              <button class="settings-btn" data-value="lg">L</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -879,6 +1046,9 @@
 
         <button class="reset-btn" id="reset-filters">Reset</button>
       </div>
+
+      <!-- ----- Subgroup picker (second-row, appears when a supergroup chevron is open) ----- -->
+      <div class="filter-subbar" id="subgroup-subbar"></div>
 
       <!-- ----- Panel area ----- -->
       <div class="panel-area">
@@ -1087,17 +1257,46 @@
       'Multiple Targets',
     ];
 
+    // Build a supergroup→[subgroups] lookup from the data so the subgroup
+    // picker can drill down. Done once at IIFE init.
+    const SUBGROUPS_BY_SG = (function () {
+      const acc = {};
+      for (const sg of SUPERGROUP_ORDER) acc[sg] = new Set();
+      const b = window.atlasData && window.atlasData.branches;
+      if (b) {
+        for (let i = 0; i < b.subject.length; i++) {
+          const g = b.group[i], s = b.subgroup[i];
+          if (g && s && acc[g]) acc[g].add(s);
+        }
+      }
+      const out = {};
+      for (const g of Object.keys(acc)) out[g] = [...acc[g]].sort();
+      return out;
+    })();
+    // Initial subgroup filter = all subgroups, encoded as 'group|subgroup' keys
+    const ALL_SUBGROUP_KEYS = (function () {
+      const out = new Set();
+      for (const g of SUPERGROUP_ORDER) {
+        for (const s of (SUBGROUPS_BY_SG[g] || [])) out.add(g + '|' + s);
+      }
+      return out;
+    })();
+
     // ---- Application state ----
     const state = {
       distanceMode: 'registered',      // 'registered' | 'raw'
       activePanel: 'individual',       // 'individual' | 'subgroup-means' | 'metro' | 'density' | 'selectivity'
+      fontSize: 'md',                  // 'sm' | 'md' | 'lg' — app chrome scaling
       filters: {
         side: new Set(['L', 'R']),
         sex: new Set(['F', 'M']),
-        supergroups: new Set(SUPERGROUP_ORDER),
-        subject: null,                 // null = all donors
+        supergroups: new Set(SUPERGROUP_ORDER),     // derived from subgroups: SG present iff ≥1 of its subs is in
+        subgroups: new Set(ALL_SUBGROUP_KEYS),       // canonical fine-grained filter ('group|subgroup' keys)
+        subject: null,                              // null = all donors
       },
     };
+    // UI state for the subgroup picker (which supergroup chevrons are open)
+    const subgroupPickerExpanded = new Set();
 
     // Make state inspectable from devtools
     window.appState = state;
@@ -1107,19 +1306,137 @@
       window.dispatchEvent(new CustomEvent('state-changed', { detail }));
     }
 
-    // ---- Build supergroup chips ----
+    // ---- Subgroup-aware filter helpers ----------------------------------
+    // Hex helper for soft cluster tints
+    function _hex2rgba(hex, a) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+    // How many of supergroup g's subs are currently in the include set?
+    function _subsInGroup(g) {
+      let n = 0;
+      for (const s of (SUBGROUPS_BY_SG[g] || [])) {
+        if (state.filters.subgroups.has(g + '|' + s)) n++;
+      }
+      return n;
+    }
+    // Rebuild the supergroups Set from the subgroups Set (≥1 sub in → group in).
+    function _resyncSupergroupsFromSubgroups() {
+      const out = new Set();
+      for (const g of SUPERGROUP_ORDER) if (_subsInGroup(g) > 0) out.add(g);
+      state.filters.supergroups = out;
+    }
+    // Toggle every sub of a supergroup at once (chip name click).
+    function toggleWholeSupergroup(g) {
+      const subs = SUBGROUPS_BY_SG[g] || [];
+      if (!subs.length) return;
+      const inHere = _subsInGroup(g);
+      if (inHere === subs.length) {
+        for (const s of subs) state.filters.subgroups.delete(g + '|' + s);
+      } else {
+        for (const s of subs) state.filters.subgroups.add(g + '|' + s);
+      }
+      _resyncSupergroupsFromSubgroups();
+    }
+    // Toggle a single subgroup (sub-chip click in the sub-bar).
+    function toggleSubgroup(g, s) {
+      const k = g + '|' + s;
+      if (state.filters.subgroups.has(k)) state.filters.subgroups.delete(k);
+      else state.filters.subgroups.add(k);
+      _resyncSupergroupsFromSubgroups();
+    }
+    // Toggle whether a supergroup's subgroup tray is open.
+    function toggleSubgroupExpansion(g) {
+      if (subgroupPickerExpanded.has(g)) subgroupPickerExpanded.delete(g);
+      else subgroupPickerExpanded.add(g);
+    }
+
+    // ---- Build supergroup chips (chip-name + chevron) ----
     function buildSupergroupChips() {
       const host = document.getElementById('supergroup-chips');
       SUPERGROUP_ORDER.forEach((sg) => {
         const btn = document.createElement('button');
-        btn.className = 'chip sg-chip active';
+        btn.className = 'chip sg-chip';
         btn.dataset.filter = 'supergroup';
         btn.dataset.value = sg;
         btn.style.setProperty('--sg-color', SUPERGROUP_PALETTE[sg]);
-        btn.textContent = sg;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'sg-chip-name';
+        nameSpan.dataset.action = 'toggle-sg';
+        nameSpan.textContent = sg;
+        const chev = document.createElement('span');
+        chev.className = 'sg-chip-chevron';
+        chev.dataset.action = 'toggle-tray';
+        chev.textContent = '▾';
+        btn.appendChild(nameSpan);
+        btn.appendChild(chev);
         host.appendChild(btn);
       });
+      refreshSupergroupChips();
     }
+
+    // Refresh active/partial classes on supergroup chips + chevron glyphs.
+    function refreshSupergroupChips() {
+      document.querySelectorAll('#supergroup-chips .sg-chip').forEach(chip => {
+        const g = chip.dataset.value;
+        const subs = SUBGROUPS_BY_SG[g] || [];
+        const inHere = _subsInGroup(g);
+        chip.classList.remove('active', 'partial');
+        if (inHere === subs.length && subs.length > 0) chip.classList.add('active');
+        else if (inHere > 0) chip.classList.add('partial');
+        const chev = chip.querySelector('.sg-chip-chevron');
+        if (chev) chev.textContent = subgroupPickerExpanded.has(g) ? '▴' : '▾';
+      });
+    }
+
+    // Render the second-row sub-bar with one cluster per expanded supergroup.
+    function buildSubgroupSubbar() {
+      const host = document.getElementById('subgroup-subbar');
+      host.innerHTML = '';
+      if (!subgroupPickerExpanded.size) {
+        host.classList.remove('has-expanded');
+        return;
+      }
+      host.classList.add('has-expanded');
+      for (const g of SUPERGROUP_ORDER) {
+        if (!subgroupPickerExpanded.has(g)) continue;
+        const subs = SUBGROUPS_BY_SG[g] || [];
+        if (!subs.length) continue;
+        const color = SUPERGROUP_PALETTE[g] || '#666';
+        const cluster = document.createElement('div');
+        cluster.className = 'fsb-cluster';
+        cluster.style.setProperty('--sg-color', color);
+        cluster.style.setProperty('--sg-tint', _hex2rgba(color, 0.10));
+        cluster.style.setProperty('--sg-border', _hex2rgba(color, 0.35));
+        const label = document.createElement('span');
+        label.className = 'fsb-cluster-label';
+        label.textContent = g;
+        cluster.appendChild(label);
+        for (const s of subs) {
+          const sub = document.createElement('button');
+          sub.className = 'fsb-sub-chip';
+          sub.dataset.sg = g;
+          sub.dataset.sub = s;
+          sub.textContent = s;
+          if (state.filters.subgroups.has(g + '|' + s)) sub.classList.add('active');
+          cluster.appendChild(sub);
+        }
+        host.appendChild(cluster);
+      }
+    }
+
+    // Wire the sub-bar click handler ONCE (delegation; rerenders inside).
+    document.getElementById('subgroup-subbar').addEventListener('click', (e) => {
+      const sub = e.target.closest('.fsb-sub-chip');
+      if (!sub) return;
+      toggleSubgroup(sub.dataset.sg, sub.dataset.sub);
+      refreshSupergroupChips();
+      buildSubgroupSubbar();
+      emit({ kind: 'filter', filter: 'subgroups', value: sub.dataset.sg + '|' + sub.dataset.sub });
+      renderDebug();
+    });
 
     // ---- Distance mode toggle ----
     document.getElementById('toggle-distance-mode').addEventListener('click', (e) => {
@@ -1165,6 +1482,26 @@
     }
 
     document.querySelector('.filter-bar').addEventListener('click', (e) => {
+      // Supergroup chips have their own structure (name + chevron) and routing
+      const sgChip = e.target.closest('.chip.sg-chip');
+      if (sgChip) {
+        const g = sgChip.dataset.value;
+        const chev = e.target.closest('.sg-chip-chevron');
+        const name = e.target.closest('.sg-chip-name');
+        if (chev) {
+          toggleSubgroupExpansion(g);
+          refreshSupergroupChips();
+          buildSubgroupSubbar();
+        } else if (name) {
+          toggleWholeSupergroup(g);
+          refreshSupergroupChips();
+          buildSubgroupSubbar();
+          emit({ kind: 'filter', filter: 'supergroups', value: g });
+          renderDebug();
+        }
+        return;
+      }
+      // Other filter chips (Side, Sex) — original toggle path
       const chip = e.target.closest('.chip[data-filter]');
       if (chip) {
         const filter = chip.dataset.filter;
@@ -1201,10 +1538,16 @@
     document.getElementById('reset-filters').addEventListener('click', () => {
       state.filters.side = new Set(['L', 'R']);
       state.filters.sex = new Set(['F', 'M']);
-      state.filters.supergroups = new Set(SUPERGROUP_ORDER);
+      state.filters.subgroups = new Set(ALL_SUBGROUP_KEYS);
+      _resyncSupergroupsFromSubgroups();
       state.filters.subject = null;
+      subgroupPickerExpanded.clear();
 
-      document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.add('active'));
+      // Re-activate Side/Sex chips
+      document.querySelectorAll('.chip[data-filter]:not(.sg-chip)').forEach(c => c.classList.add('active'));
+      // Refresh the supergroup chip row + collapse the sub-bar
+      refreshSupergroupChips();
+      buildSubgroupSubbar();
       document.getElementById('subject-select').value = '';
 
       emit({ kind: 'reset' });
@@ -1232,8 +1575,61 @@
       }
     });
 
+    // ---- Settings dropdown ----
+    const FONT_SIZE_PX = { sm: '12px', md: '13px', lg: '15px' };
+
+    function applyFontSize() {
+      document.body.style.fontSize = FONT_SIZE_PX[state.fontSize] || '13px';
+      document.querySelectorAll('[data-setting="font-size"] .settings-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.value === state.fontSize);
+      });
+    }
+
+    function setSettingsOpen(open) {
+      const toggle = document.getElementById('settings-toggle');
+      const dropdown = document.getElementById('settings-dropdown');
+      dropdown.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+
+    document.getElementById('settings-toggle').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = document.getElementById('settings-dropdown');
+      setSettingsOpen(!dropdown.classList.contains('open'));
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      const toggle = document.getElementById('settings-toggle');
+      const dropdown = document.getElementById('settings-dropdown');
+      if (!dropdown.classList.contains('open')) return;
+      if (toggle.contains(e.target) || dropdown.contains(e.target)) return;
+      setSettingsOpen(false);
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const dropdown = document.getElementById('settings-dropdown');
+        if (dropdown.classList.contains('open')) setSettingsOpen(false);
+      }
+    });
+
+    // Font-size buttons (inside the dropdown)
+    document.querySelector('[data-setting="font-size"]').addEventListener('click', (e) => {
+      const btn = e.target.closest('.settings-btn');
+      if (!btn) return;
+      const v = btn.dataset.value;
+      if (v === state.fontSize) return;
+      state.fontSize = v;
+      applyFontSize();
+      emit({ kind: 'fontSize', value: v });
+      renderDebug();
+    });
+
     // ---- Bootstrap ----
     buildSupergroupChips();
+    applyFontSize();
     renderDebug();
 
     console.log('[Vagus Atlas Explorer] state initialized', state);
@@ -1263,6 +1659,29 @@
       'Other':             '#000000',
     };
     const GROUP_ORDER = ['Sympathetic', 'Muscular', 'Multiple Targets', 'Vascular', 'Cardiac', 'Pulmonary', 'Esophageal'];
+
+    // Hex color helpers — used by sex-split tinting (F = lightened, M = base/darkened)
+    function _hexToRgb(hex) {
+      return [
+        parseInt(hex.slice(1, 3), 16),
+        parseInt(hex.slice(3, 5), 16),
+        parseInt(hex.slice(5, 7), 16),
+      ];
+    }
+    function _rgbToHex(r, g, b) {
+      const h = x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0');
+      return '#' + h(r) + h(g) + h(b);
+    }
+    // t in [0,1]; 0 = unchanged, 1 = fully white
+    function lighten(hex, t) {
+      const [r, g, b] = _hexToRgb(hex);
+      return _rgbToHex(r + (255 - r) * t, g + (255 - g) * t, b + (255 - b) * t);
+    }
+    // t in [0,1]; 0 = unchanged, 1 = fully black
+    function darken(hex, t) {
+      const [r, g, b] = _hexToRgb(hex);
+      return _rgbToHex(r * (1 - t), g * (1 - t), b * (1 - t));
+    }
 
     // Auto-assigned palette for user pools (cycles)
     const POOL_PALETTE = [
@@ -1774,13 +2193,56 @@
       const shapes = [];
       const annotations = [];
 
+      // Tiny RNG-helper: deterministic jitter so dots don't dance on every re-render
+      function jitter(seed, lo, hi) {
+        // mulberry32
+        let t = seed + 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        const u = ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        return lo + u * (hi - lo);
+      }
+
+      // Map each supergroup to the row index of its FIRST subgroup row (used for placing the b/s annotation)
+      const sgFirstRow = {};
+      rows.forEach((r, i) => { if (r.kind === 'sub' && sgFirstRow[r.group] == null) sgFirstRow[r.group] = i; });
+
       sides.forEach((side, sIdx) => {
         const xName = (showBoth && sIdx === 1) ? 'x2' : 'x';
         const yName = (showBoth && sIdx === 1) ? 'y2' : 'y';
 
+        // ----- Anatomical zone background bands (registered mode only) -----
+        if (useReg && D.anchors[side] && D.anchors[side].registered) {
+          const a = D.anchors[side].registered;
+          const U = a.U, M = a.M, Dz = a.D;
+          if (U != null && M != null && Dz != null) {
+            const zones = [
+              { name: 'Upper cervical', from: xMin,  to: U,    tint: 'rgba(180,160,130,0.10)' },
+              { name: 'Mid cervical',   from: U,     to: M,    tint: 'rgba(180,160,130,0.18)' },
+              { name: 'Lower cervical', from: M,     to: Dz,   tint: 'rgba(180,160,130,0.10)' },
+              { name: 'Thoracic',       from: Dz,    to: xMax, tint: 'rgba(180,160,130,0.05)' },
+            ];
+            zones.forEach(z => {
+              shapes.push({
+                type: 'rect', xref: xName, yref: yName,
+                x0: z.from, x1: z.to, y0: -0.6, y1: K - 0.4,
+                fillcolor: z.tint, line: { width: 0 },
+                layer: 'below',
+              });
+              annotations.push({
+                x: (z.from + z.to) / 2, y: -0.55,
+                xref: xName, yref: yName,
+                text: z.name,
+                showarrow: false, yanchor: 'bottom',
+                font: { size: 9.5, color: '#888' },
+              });
+            });
+          }
+        }
+
         // Filter branches for this side + global filters, per supergroup
         const perSg = {};
-        for (const g of GROUP_ORDER) perSg[g] = { x: [], y: [], sex: [], hover: [] };
+        for (const g of GROUP_ORDER) perSg[g] = { x: [], y: [], sex: [], subj: [], hover: [] };
 
         for (let i = 0; i < branches.subject.length; i++) {
           if (branches.side[i] !== side) continue;
@@ -1788,6 +2250,8 @@
           if (state.filters.subject && branches.subject[i] !== state.filters.subject) continue;
           const sg = subStdAll[i];
           if (!subToRowIdx.has(sg)) continue;
+          // Honor the global subgroup filter (set up in shell IIFE)
+          if (state.filters.subgroups && !state.filters.subgroups.has(branches.group[i] + '|' + sg)) continue;
           const v = branches[distKey][i];
           if (v == null) continue;
           const g = branches.group[i];
@@ -1796,6 +2260,7 @@
           perSg[g].x.push(v);
           perSg[g].y.push(yIdx);
           perSg[g].sex.push(branches.sex[i] || '');
+          perSg[g].subj.push(branches.subject[i]);
           perSg[g].hover.push(sg + ' · ' + branches.subject[i] + ' ' + branches.side[i]);
         }
 
@@ -1804,31 +2269,66 @@
           if (!data.x.length) continue;
           const color = SG_PALETTE[g];
 
+          // ----- b=N, s=M annotation (count branches and unique subjects in this side+supergroup) -----
+          const nB = data.x.length;
+          const nS = new Set(data.subj).size;
+          const yAnchor = sgFirstRow[g];
+          if (yAnchor != null) {
+            annotations.push({
+              x: xMin + 0.5, y: yAnchor - 0.55,
+              xref: xName, yref: yName,
+              text: `b=${nB}, s=${nS}`,
+              showarrow: false,
+              xanchor: 'left', yanchor: 'middle',
+              font: { size: 9.5, color: darken(color, 0.15) },
+              bgcolor: 'rgba(255,255,255,0.85)', borderpad: 2,
+            });
+          }
+
           if (sel.sexSplit) {
-            // Two traces per supergroup, sex-split
+            // Two traces per supergroup, sex-split.
+            // F gets a lightened tint of the supergroup color (top half),
+            // M gets a slightly darkened tint (bottom half) — keeps the
+            // supergroup identity readable while visually separating sexes.
+            const fillF = lighten(color, 0.45);
+            const fillM = darken(color, 0.10);
+            const lineM = darken(color, 0.25);
             const xF = [], yF = [], hF = [];
             const xM = [], yM = [], hM = [];
             for (let k = 0; k < data.x.length; k++) {
               if (data.sex[k] === 'F') { xF.push(data.x[k]); yF.push(data.y[k]); hF.push(data.hover[k]); }
               else if (data.sex[k] === 'M') { xM.push(data.x[k]); yM.push(data.y[k]); hM.push(data.hover[k]); }
             }
+            // Seed bases per side+sex+supergroup so jitter is stable across renders
+            const seedF = (side === 'L' ? 1000 : 2000) + (g.length * 41) + 17;
+            const seedM = (side === 'L' ? 1000 : 2000) + (g.length * 41) + 53;
             if (xF.length) {
               traces.push({
                 type: 'violin', orientation: 'h',
                 x: xF, y: yF, text: hF,
                 xaxis: xName, yaxis: yName,
                 side: 'positive',
-                fillcolor: color, opacity: 0.35,
+                fillcolor: fillF, opacity: 0.65,
                 line: { color: color, width: 1.2 },
                 box: { visible: false }, points: false,
                 meanline: { visible: true, color: color, width: 1 },
                 spanmode: 'hard',
                 width: 1.6,
                 hoveron: 'violins',
-                name: g,
-                legendgroup: 'sg-' + g,
+                name: g + ' · F',
+                legendgroup: 'sg-' + g + '-F',
                 showlegend: sIdx === 0,
                 hovertemplate: '<b>' + g + '</b> · F<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+              });
+              // F dots — jittered into the upper (positive) violin half
+              traces.push({
+                type: 'scatter', mode: 'markers',
+                x: xF, y: yF.map((y, k) => y + jitter(seedF + k, 0.05, 0.55)),
+                xaxis: xName, yaxis: yName, text: hF,
+                marker: { size: 3, color: darken(color, 0.10), opacity: 0.55, line: { width: 0 } },
+                hovertemplate: '<b>' + g + '</b> · F<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+                showlegend: false,
+                legendgroup: 'sg-' + g + '-F',
               });
             }
             if (xM.length) {
@@ -1837,17 +2337,27 @@
                 x: xM, y: yM, text: hM,
                 xaxis: xName, yaxis: yName,
                 side: 'negative',
-                fillcolor: color, opacity: 0.35,
-                line: { color: color, width: 1.2 },
+                fillcolor: fillM, opacity: 0.65,
+                line: { color: lineM, width: 1.2 },
                 box: { visible: false }, points: false,
-                meanline: { visible: true, color: color, width: 1 },
+                meanline: { visible: true, color: lineM, width: 1 },
                 spanmode: 'hard',
                 width: 1.6,
                 hoveron: 'violins',
-                name: g,
-                legendgroup: 'sg-' + g,
-                showlegend: false,
+                name: g + ' · M',
+                legendgroup: 'sg-' + g + '-M',
+                showlegend: sIdx === 0,
                 hovertemplate: '<b>' + g + '</b> · M<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+              });
+              // M dots — jittered into the lower (negative) violin half
+              traces.push({
+                type: 'scatter', mode: 'markers',
+                x: xM, y: yM.map((y, k) => y + jitter(seedM + k, -0.55, -0.05)),
+                xaxis: xName, yaxis: yName, text: hM,
+                marker: { size: 3, color: darken(color, 0.25), opacity: 0.55, line: { width: 0 } },
+                hovertemplate: '<b>' + g + '</b> · M<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+                showlegend: false,
+                legendgroup: 'sg-' + g + '-M',
               });
             }
           } else {
@@ -1867,6 +2377,17 @@
               legendgroup: 'sg-' + g,
               showlegend: sIdx === 0,
               hovertemplate: '<b>' + g + '</b><br>%{text}<br>%{x:.2f} cm<extra></extra>',
+            });
+            // Dots — jittered across both halves of the violin
+            const seedB = (side === 'L' ? 1000 : 2000) + (g.length * 41);
+            traces.push({
+              type: 'scatter', mode: 'markers',
+              x: data.x, y: data.y.map((y, k) => y + jitter(seedB + k, -0.55, 0.55)),
+              xaxis: xName, yaxis: yName, text: data.hover,
+              marker: { size: 3, color: darken(color, 0.15), opacity: 0.50, line: { width: 0 } },
+              hovertemplate: '<b>' + g + '</b><br>%{text}<br>%{x:.2f} cm<extra></extra>',
+              showlegend: false,
+              legendgroup: 'sg-' + g,
             });
           }
         }
@@ -2235,11 +2756,13 @@
 
     function filteredBranchIndices(state) {
       const b = D.branches;
+      const sgFilter = state.filters.subgroups;
       const out = [];
       for (let i = 0; i < b.subject.length; i++) {
         if (!state.filters.side.has(b.side[i])) continue;
         if (b.sex[i] && !state.filters.sex.has(b.sex[i])) continue;
         if (!state.filters.supergroups.has(b.group[i])) continue;
+        if (sgFilter && b.subgroup[i] && !sgFilter.has(b.group[i] + '|' + b.subgroup[i])) continue;
         if (state.filters.subject && b.subject[i] !== state.filters.subject) continue;
         out.push(i);
       }
@@ -2690,10 +3213,12 @@
       });
       const cohortDonorIds = new Set(cohortDonors.map(d => d.id));
 
+      const sgFilter = state.filters.subgroups;
       const cohortBranchPass = (i) => {
         if (!state.filters.side.has(b.side[i])) return false;
         if (!cohortDonorIds.has(b.subject[i])) return false;
         if (!state.filters.supergroups.has(b.group[i])) return false;
+        if (sgFilter && b.subgroup[i] && !sgFilter.has(b.group[i] + '|' + b.subgroup[i])) return false;
         return true;
       };
 
@@ -2729,6 +3254,7 @@
         if (!displayDonorIds.has(b.subject[i])) continue;
         if (!state.filters.side.has(b.side[i])) continue;
         if (!state.filters.supergroups.has(b.group[i])) continue;
+        if (sgFilter && b.subgroup[i] && !sgFilter.has(b.group[i] + '|' + b.subgroup[i])) continue;
         presence.set(`${sg}|${b.subject[i]}|${b.side[i]}`, 1);
       }
 
