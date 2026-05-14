@@ -911,6 +911,41 @@
   .settings-btn.active {
     background: #111; color: #fff; border-color: #111;
   }
+  /* Numeric scale input (with native up/down spinner arrows) */
+  .settings-num {
+    flex: 1;
+    font: inherit;
+    font-size: 12px;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #222;
+    text-align: right;
+    min-width: 64px;
+    max-width: 80px;
+    font-variant-numeric: tabular-nums;
+  }
+  .settings-num:focus { outline: 2px solid #111; outline-offset: -2px; }
+  .settings-num-unit {
+    font-size: 11px;
+    color: #888;
+    margin-left: 4px;
+    align-self: center;
+  }
+  .settings-num-reset {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font: inherit;
+    font-size: 10.5px;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #666;
+    cursor: pointer;
+  }
+  .settings-num-reset:hover { background: #f3f3f3; color: #111; }
 
   /* ==========================================================
      DEBUG WIDGET (development only — remove later)
@@ -933,6 +968,32 @@
     opacity: 0.85;
   }
   #debug-state.hidden { display: none; }
+
+  /* ==========================================================
+     APP CHROME FONT SCALING (high-specificity overrides at the end of the stylesheet so they win)
+     Toggled via JS: document.documentElement.style.setProperty('--scale-chrome', '1.20')
+     ========================================================== */
+  :root { --scale-chrome: 1; }
+  html body { font-size: calc(13px * var(--scale-chrome)); }
+  #app header h1 { font-size: calc(16px * var(--scale-chrome)); }
+  #app header .subtitle { font-size: calc(12px * var(--scale-chrome)); }
+  #app header .badge { font-size: calc(11px * var(--scale-chrome)); }
+  #app header .header-link { font-size: calc(12px * var(--scale-chrome)); }
+  #app aside.sidebar .side-section h4 { font-size: calc(10.5px * var(--scale-chrome)); }
+  #app .panel-nav .nav-item { font-size: calc(12.5px * var(--scale-chrome)); }
+  #app .settings-section .settings-toggle { font-size: calc(12px * var(--scale-chrome)); }
+  #app .settings-section .settings-row-label { font-size: calc(10px * var(--scale-chrome)); }
+  #app .settings-section .settings-btn { font-size: calc(11px * var(--scale-chrome)); }
+  #app .filter-bar .filter-label { font-size: calc(10.5px * var(--scale-chrome)); }
+  #app .filter-bar .chip { font-size: calc(11.5px * var(--scale-chrome)); }
+  #app .filter-bar .chip .sg-chip-chevron { font-size: calc(9px * var(--scale-chrome)); }
+  #app .filter-bar .filter-group select { font-size: calc(12px * var(--scale-chrome)); }
+  #app .filter-bar .reset-btn { font-size: calc(11.5px * var(--scale-chrome)); }
+  #app .filter-subbar .fsb-cluster-label { font-size: calc(10px * var(--scale-chrome)); }
+  #app .filter-subbar .fsb-sub-chip { font-size: calc(10.5px * var(--scale-chrome)); }
+  #app footer { font-size: calc(11px * var(--scale-chrome)); }
+  #app .card-header h2 { font-size: calc(15px * var(--scale-chrome)); }
+  #app .card-meta { font-size: calc(11.5px * var(--scale-chrome)); }
 </style>
 </head>
 <body data-distance-mode="registered">
@@ -991,11 +1052,47 @@
           </div>
 
           <div class="settings-row">
-            <span class="settings-row-label">App font size</span>
-            <div class="settings-row-control" data-setting="font-size">
-              <button class="settings-btn" data-value="sm">S</button>
-              <button class="settings-btn active" data-value="md">M</button>
-              <button class="settings-btn" data-value="lg">L</button>
+            <span class="settings-row-label">Plot headings</span>
+            <div class="settings-row-control" data-setting="scale-plotHeadings">
+              <input type="number" class="settings-num" min="50" max="200" step="5" value="100">
+              <span class="settings-num-unit">%</span>
+              <button class="settings-num-reset" type="button" title="Reset to 100%">Reset</button>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-row-label">Plot tick labels</span>
+            <div class="settings-row-control" data-setting="scale-plotTicks">
+              <input type="number" class="settings-num" min="50" max="200" step="5" value="100">
+              <span class="settings-num-unit">%</span>
+              <button class="settings-num-reset" type="button" title="Reset to 100%">Reset</button>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-row-label">Plot annotations</span>
+            <div class="settings-row-control" data-setting="scale-plotAnnotations">
+              <input type="number" class="settings-num" min="50" max="200" step="5" value="100">
+              <span class="settings-num-unit">%</span>
+              <button class="settings-num-reset" type="button" title="Reset to 100%">Reset</button>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-row-label">Plot legend</span>
+            <div class="settings-row-control" data-setting="scale-plotLegend">
+              <input type="number" class="settings-num" min="50" max="200" step="5" value="100">
+              <span class="settings-num-unit">%</span>
+              <button class="settings-num-reset" type="button" title="Reset to 100%">Reset</button>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-row-label">App chrome</span>
+            <div class="settings-row-control" data-setting="scale-appChrome">
+              <input type="number" class="settings-num" min="50" max="200" step="5" value="100">
+              <span class="settings-num-unit">%</span>
+              <button class="settings-num-reset" type="button" title="Reset to 100%">Reset</button>
             </div>
           </div>
 
@@ -1232,7 +1329,7 @@
   <!-- =================================================
        DEBUG STATE WIDGET (dev only)
        ================================================= -->
-  <div id="debug-state"></div>
+  <div id="debug-state" class="hidden"></div>
 
   <!-- =================================================
        STATE MANAGEMENT
@@ -1286,7 +1383,19 @@
     const state = {
       distanceMode: 'registered',      // 'registered' | 'raw'
       activePanel: 'individual',       // 'individual' | 'subgroup-means' | 'metro' | 'density' | 'selectivity'
-      fontSize: 'md',                  // 'sm' | 'md' | 'lg' — app chrome scaling
+      // Five role-based font scales — each is a numeric multiplier in [0.5, 2.0].
+      // plotHeadings  = chart titles, axis titles, side panel labels ("Left"/"Right")
+      // plotTicks     = axis tick labels (y-axis subgroup names, x-axis numbers)
+      // plotAnnotations = in-chart overlays (zone labels, landmark labels, b=N s=M counts)
+      // plotLegend    = legend entries
+      // appChrome     = sidebar, filter bar, header, footer, settings, hovers
+      fontScales: {
+        plotHeadings:    1.0,
+        plotTicks:       1.0,
+        plotAnnotations: 1.0,
+        plotLegend:      1.0,
+        appChrome:       1.0,
+      },
       filters: {
         side: new Set(['L', 'R']),
         sex: new Set(['F', 'M']),
@@ -1294,6 +1403,13 @@
         subgroups: new Set(ALL_SUBGROUP_KEYS),       // canonical fine-grained filter ('group|subgroup' keys)
         subject: null,                              // null = all donors
       },
+    };
+    // Global helper: panels use fsRole('plotHeadings', 13) -> returns scaled px (integer).
+    // state.fontScales[role] is a numeric multiplier; missing/invalid -> 1.0.
+    window.fsRole = function (role, baseSize) {
+      const m = window.appState && window.appState.fontScales && window.appState.fontScales[role];
+      const mul = (typeof m === 'number' && isFinite(m) && m > 0) ? m : 1.0;
+      return Math.max(6, Math.round(baseSize * mul));
     };
     // UI state for the subgroup picker (which supergroup chevrons are open)
     const subgroupPickerExpanded = new Set();
@@ -1576,12 +1692,16 @@
     });
 
     // ---- Settings dropdown ----
-    const FONT_SIZE_PX = { sm: '12px', md: '13px', lg: '15px' };
-
-    function applyFontSize() {
-      document.body.style.fontSize = FONT_SIZE_PX[state.fontSize] || '13px';
-      document.querySelectorAll('[data-setting="font-size"] .settings-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.value === state.fontSize);
+    function applyFontScales() {
+      // App chrome scales via the --scale-chrome CSS variable on :root
+      document.documentElement.style.setProperty('--scale-chrome', String(state.fontScales.appChrome));
+      // Sync each row's number input with current state (percentage representation)
+      Object.keys(state.fontScales).forEach(role => {
+        const input = document.querySelector('[data-setting="scale-' + role + '"] .settings-num');
+        if (input) {
+          const pct = Math.round(state.fontScales[role] * 100);
+          if (parseInt(input.value, 10) !== pct) input.value = String(pct);
+        }
       });
     }
 
@@ -1615,21 +1735,45 @@
       }
     });
 
-    // Font-size buttons (inside the dropdown)
-    document.querySelector('[data-setting="font-size"]').addEventListener('click', (e) => {
-      const btn = e.target.closest('.settings-btn');
-      if (!btn) return;
-      const v = btn.dataset.value;
-      if (v === state.fontSize) return;
-      state.fontSize = v;
-      applyFontSize();
-      emit({ kind: 'fontSize', value: v });
+    // Font-scale controls — delegated handlers for number-input changes + reset buttons.
+    function _setRoleScale(role, mul) {
+      const clamped = Math.max(0.5, Math.min(2.0, mul));
+      if (Math.abs(state.fontScales[role] - clamped) < 1e-6) return;
+      state.fontScales[role] = clamped;
+      applyFontScales();
+      emit({ kind: 'fontScale', role, value: clamped });
       renderDebug();
+    }
+    // 'input' event fires for both arrow clicks and typing — gives real-time updates.
+    document.getElementById('settings-dropdown').addEventListener('input', (e) => {
+      const input = e.target.closest('.settings-num');
+      if (!input) return;
+      const row = input.closest('[data-setting]');
+      if (!row) return;
+      const ds = row.dataset.setting || '';
+      if (!ds.startsWith('scale-')) return;
+      const role = ds.slice('scale-'.length);
+      if (!(role in state.fontScales)) return;
+      const pct = parseInt(input.value, 10);
+      if (isNaN(pct)) return; // user is mid-typing
+      _setRoleScale(role, pct / 100);
+    });
+    // Reset buttons
+    document.getElementById('settings-dropdown').addEventListener('click', (e) => {
+      const reset = e.target.closest('.settings-num-reset');
+      if (!reset) return;
+      const row = reset.closest('[data-setting]');
+      if (!row) return;
+      const ds = row.dataset.setting || '';
+      if (!ds.startsWith('scale-')) return;
+      const role = ds.slice('scale-'.length);
+      if (!(role in state.fontScales)) return;
+      _setRoleScale(role, 1.0);
     });
 
     // ---- Bootstrap ----
     buildSupergroupChips();
-    applyFontSize();
+    applyFontScales();
     renderDebug();
 
     console.log('[Vagus Atlas Explorer] state initialized', state);
@@ -2127,7 +2271,7 @@
           x: a[k], y: yMax, xref: xref, yref: yref,
           text: '<b>' + LANDMARK_LABEL[k] + '</b>',
           showarrow: false, yanchor: 'bottom',
-          font: { size: 10, color: lc },
+          font: { size: window.fsRole('plotAnnotations', 10), color: lc },
           bgcolor: 'rgba(255,255,255,0.92)', borderpad: 2,
         });
       }
@@ -2234,7 +2378,7 @@
                 xref: xName, yref: yName,
                 text: z.name,
                 showarrow: false, yanchor: 'bottom',
-                font: { size: 9.5, color: '#888' },
+                font: { size: window.fsRole('plotAnnotations', 9.5), color: '#888' },
               });
             });
           }
@@ -2280,7 +2424,7 @@
               text: `b=${nB}, s=${nS}`,
               showarrow: false,
               xanchor: 'left', yanchor: 'middle',
-              font: { size: 9.5, color: darken(color, 0.15) },
+              font: { size: window.fsRole('plotAnnotations', 9.5), color: darken(color, 0.15) },
               bgcolor: 'rgba(255,255,255,0.85)', borderpad: 2,
             });
           }
@@ -2415,7 +2559,7 @@
             x: titleX, y: 1.02, xref: 'paper', yref: 'paper',
             text: '<b>' + (side === 'L' ? 'Left' : 'Right') + '</b>',
             showarrow: false, yanchor: 'bottom',
-            font: { size: 13, color: '#222' },
+            font: { size: window.fsRole('plotHeadings', 13), color: '#222' },
           });
         }
       });
@@ -2438,18 +2582,18 @@
         height: figHeight,
         violingap: 0.2, violingroupgap: 0.05,
         showlegend: true,
-        legend: { orientation: 'h', y: -0.06, x: 0.5, xanchor: 'center', font: { size: 11 } },
-        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        legend: { orientation: 'h', y: -0.06, x: 0.5, xanchor: 'center', font: { size: window.fsRole('plotLegend', 11) } },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: window.fsRole('plotAnnotations', 11) } },
       };
 
       if (showBoth) {
         layout.xaxis  = { domain: [0, 0.48],  anchor: 'y',  range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
         layout.xaxis2 = { domain: [0.52, 1.0], anchor: 'y2', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
-        layout.yaxis  = { domain: [0, 1], anchor: 'x',  range: [K - 0.4, -0.6], tickvals, ticktext, tickfont: { size: 11 }, showgrid: false, zeroline: false };
+        layout.yaxis  = { domain: [0, 1], anchor: 'x',  range: [K - 0.4, -0.6], tickvals, ticktext, tickfont: { size: window.fsRole('plotTicks', 11) }, showgrid: false, zeroline: false };
         layout.yaxis2 = { domain: [0, 1], anchor: 'x2', range: [K - 0.4, -0.6], tickvals: [], ticktext: [], showgrid: false, zeroline: false };
       } else {
         layout.xaxis = { domain: [0, 1], anchor: 'y', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
-        layout.yaxis = { domain: [0, 1], anchor: 'x', range: [K - 0.4, -0.6], tickvals, ticktext, tickfont: { size: 11 }, showgrid: false, zeroline: false };
+        layout.yaxis = { domain: [0, 1], anchor: 'x', range: [K - 0.4, -0.6], tickvals, ticktext, tickfont: { size: window.fsRole('plotTicks', 11) }, showgrid: false, zeroline: false };
       }
 
       Plotly.react('fig-violins', traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
@@ -2587,7 +2731,7 @@
               xref: xName, yref: yName,
               text: 'n=' + dat.xs.length + ' · md ' + med.toFixed(1) + ' · IQR ' + q1.toFixed(1) + '–' + q3.toFixed(1),
               showarrow: false, xanchor: 'right', yanchor: 'middle',
-              font: { size: 10.5, color: pool.color },
+              font: { size: window.fsRole('plotAnnotations', 10.5), color: pool.color },
               bgcolor: 'rgba(255,255,255,0.85)', borderpad: 2,
             });
           }
@@ -2604,7 +2748,7 @@
             x: titleX, y: 1.04, xref: 'paper', yref: 'paper',
             text: '<b>' + (side === 'L' ? 'Left' : 'Right') + '</b>',
             showarrow: false, yanchor: 'bottom',
-            font: { size: 13, color: '#222' },
+            font: { size: window.fsRole('plotHeadings', 13), color: '#222' },
           });
         }
       });
@@ -2618,16 +2762,16 @@
         height: figHeight,
         violingap: 0.4,
         showlegend: false,
-        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: window.fsRole('plotAnnotations', 11) } },
       };
       if (showBoth) {
         layout.xaxis  = { domain: [0, 0.48],  anchor: 'y',  range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
         layout.xaxis2 = { domain: [0.52, 1.0], anchor: 'y2', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
-        layout.yaxis  = { domain: [0, 1], anchor: 'x',  range: [-0.7, N - 0.3], tickvals, ticktext, tickfont: { size: 12 }, showgrid: false, zeroline: false };
+        layout.yaxis  = { domain: [0, 1], anchor: 'x',  range: [-0.7, N - 0.3], tickvals, ticktext, tickfont: { size: window.fsRole('plotTicks', 12) }, showgrid: false, zeroline: false };
         layout.yaxis2 = { domain: [0, 1], anchor: 'x2', range: [-0.7, N - 0.3], tickvals: [], ticktext: [], showgrid: false, zeroline: false };
       } else {
         layout.xaxis = { domain: [0, 1], anchor: 'y', range: [xMin, xMax], title: xtitle, showgrid: true, gridcolor: '#f0f0f0', zeroline: false };
-        layout.yaxis = { domain: [0, 1], anchor: 'x', range: [-0.7, N - 0.3], tickvals, ticktext, tickfont: { size: 12 }, showgrid: false, zeroline: false };
+        layout.yaxis = { domain: [0, 1], anchor: 'x', range: [-0.7, N - 0.3], tickvals, ticktext, tickfont: { size: window.fsRole('plotTicks', 12) }, showgrid: false, zeroline: false };
       }
 
       Plotly.react('fig-violins', traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
@@ -2944,7 +3088,7 @@
                 x: xL, y: yTop, xref: 'x', yref: 'y',
                 text: '<b>' + LANDMARK_LABEL[k] + '</b>',
                 showarrow: false, yanchor: 'bottom',
-                font: { size: 11.5, color: LM_L_COLOR },
+                font: { size: window.fsRole('plotAnnotations', 11.5), color: LM_L_COLOR },
                 bgcolor: 'rgba(255,238,238,0.95)', borderpad: 3,
               });
             }
@@ -2964,7 +3108,7 @@
                 x: xR, y: yBottom, xref: 'x', yref: 'y',
                 text: '<b>' + LANDMARK_LABEL[k] + '</b>',
                 showarrow: false, yanchor: 'top',
-                font: { size: 11.5, color: LM_R_COLOR },
+                font: { size: window.fsRole('plotAnnotations', 11.5), color: LM_R_COLOR },
                 bgcolor: 'rgba(235,240,255,0.95)', borderpad: 3,
               });
             }
@@ -3049,7 +3193,7 @@
           x: 1.005, y: yMid, xref: 'paper', yref: 'y',
           text: `<b>${blk.side === 'L' ? 'Left' : 'Right'}</b><br><span style="font-size:10px;color:#888">n=${blk.end - blk.start + 1}</span>`,
           showarrow: false, xanchor: 'left', align: 'left',
-          font: { size: 12, color: SIDE_LM_COLOR[blk.side] },
+          font: { size: window.fsRole('plotAnnotations', 12), color: SIDE_LM_COLOR[blk.side] },
         });
       }
 
@@ -3064,7 +3208,7 @@
         yaxis: {
           range: [-0.6, nLanes - 0.4],
           tickmode: 'array', tickvals: tickvals, ticktext: ticktext,
-          tickfont: { size: 10, color: '#444', family: 'ui-monospace, Menlo, Consolas, monospace' },
+          tickfont: { size: window.fsRole('plotTicks', 10), color: '#444', family: 'ui-monospace, Menlo, Consolas, monospace' },
           showgrid: false, zeroline: false,
         },
         shapes: shapes,
@@ -3073,10 +3217,10 @@
         paper_bgcolor: '#fff',
         height: heightPx,
         legend: {
-          orientation: 'h', y: 1.04, x: 0, font: { size: 11 },
+          orientation: 'h', y: 1.04, x: 0, font: { size: window.fsRole('plotLegend', 11) },
           bgcolor: 'rgba(255,255,255,0)',
         },
-        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: window.fsRole('plotAnnotations', 11) } },
       };
 
       Plotly.react(containerId, traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
@@ -3425,7 +3569,7 @@
           x: h.x, y: firstHeaderY, xref: 'x', yref: 'y',
           text: '<b>' + h.text + '</b>',
           showarrow: false, xanchor: 'center', yanchor: 'middle',
-          font: { size: 11.5, color: '#222' },
+          font: { size: window.fsRole('plotHeadings', 11.5), color: '#222' },
         });
       });
 
@@ -3447,7 +3591,7 @@
               text: `${(frac * 100).toFixed(0)}% (${lbl.n})`,
               showarrow: false, xanchor: 'right', yanchor: 'middle',
               xshift: -(DIAM_MAX / 2 + 8),
-              font: { size: 10, color: '#333' },
+              font: { size: window.fsRole('plotAnnotations', 10), color: '#333' },
             });
           }
         });
@@ -3475,7 +3619,7 @@
           `<br><span style="font-size:12px;color:#666">Background bubble = 100% of cohort (N=${N_COHORT_F})  ·  Solid bubble diameter = subgroup prevalence</span>`;
       }
       const layout = {
-        title: { text: titleText, x: 0.02, xanchor: 'left', font: { size: 14 } },
+        title: { text: titleText, x: 0.02, xanchor: 'left', font: { size: window.fsRole('plotHeadings', 14) } },
         xaxis: {
           range: [-1.5, 1.5],
           showgrid: false, zeroline: false,
@@ -3485,21 +3629,21 @@
         yaxis: {
           range: [K - 0.2, -1.0],
           tickvals, ticktext,
-          tickfont: { size: 11 },
+          tickfont: { size: window.fsRole('plotTicks', 11) },
           showgrid: false, zeroline: false,
           fixedrange: true,
         },
         shapes, annotations,
         plot_bgcolor: '#fff',
         paper_bgcolor: '#fff',
-        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: window.fsRole('plotAnnotations', 11) } },
         margin: { l: 230, r: 60, t: 80, b: 30 },
         height: figHeight,
         legend: {
           orientation: 'h',
           x: 0.5, xanchor: 'center',
           y: 1.04, yanchor: 'bottom',
-          font: { size: 11 },
+          font: { size: window.fsRole('plotLegend', 11) },
           bgcolor: 'rgba(255,255,255,0.9)',
         },
       };
@@ -3979,7 +4123,7 @@
                 x: a[k], y: 0.85, xref: xName, yref: yRuler,
                 text: `<b>${LANDMARK_LABEL[k]}</b>`,
                 showarrow: false, yanchor: 'bottom',
-                font: { size: 10, color: lc },
+                font: { size: window.fsRole('plotAnnotations', 10), color: lc },
                 bgcolor: 'rgba(255,255,255,0.95)', borderpad: 2,
               });
             }
@@ -3991,7 +4135,7 @@
             x: titleX, y: 1.02, xref: 'paper', yref: 'paper',
             text: `<b>${side === 'L' ? 'Left' : 'Right'}</b>`,
             showarrow: false, yanchor: 'bottom',
-            font: { size: 13, color: '#222', family: 'Inter' },
+            font: { size: window.fsRole('plotHeadings', 13), color: '#222', family: 'Inter' },
           });
         }
 
@@ -4064,7 +4208,7 @@
               marker: { size: 11, color: PEAK_COLOR, symbol: 'circle', line: { color: '#fff', width: 2 } },
               text: [`x* = ${sd.peak.x.toFixed(1)} · i = ${sd.peak.i.toFixed(0)}%`],
               textposition: 'top center',
-              textfont: { size: 10.5, color: '#111' },
+              textfont: { size: window.fsRole('plotAnnotations', 10.5), color: '#111' },
               showlegend: false, hoverinfo: 'skip',
             });
             shapes.push({
@@ -4097,8 +4241,8 @@
         margin: { t: showBoth ? 36 : 22, r: 22, b: 44, l: 60 },
         plot_bgcolor: '#fff', paper_bgcolor: '#fff',
         shapes, annotations,
-        legend: { orientation: 'h', y: -0.10, x: 0.5, xanchor: 'center', font: { size: 11 }, bgcolor: 'rgba(255,255,255,0)' },
-        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: 11 } },
+        legend: { orientation: 'h', y: -0.10, x: 0.5, xanchor: 'center', font: { size: window.fsRole('plotLegend', 11) }, bgcolor: 'rgba(255,255,255,0)' },
+        hoverlabel: { bgcolor: '#fff', bordercolor: '#ddd', font: { size: window.fsRole('plotAnnotations', 11) } },
         barmode: 'overlay',
       };
 
