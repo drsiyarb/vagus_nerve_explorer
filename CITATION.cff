@@ -33,13 +33,17 @@ keywords:
 version: "1.0.0"
 date-released: "2026-05-15"
 
-# Once the manuscript is published, replace this block with the journal citation.
+# Preprint citation. Replace with the journal citation when peer-reviewed
+# publication is available (the bioRxiv DOI will continue to resolve to the
+# preprint after publication).
 preferred-citation:
   type: article
-  title: "A standardized map of human vagus nerve branch emergence defines anatomical targets for function-selective neuromodulation"
+  title: "A standardized, surgically relevant map of organ-specific branch emergence in the human vagus nerve"
   authors:
     - family-names: "Bahadir"
       given-names: "Siyar"
   year: 2026
-  # journal: ""
-  # doi: ""
+  journal: "bioRxiv"
+  doi: "10.64898/2026.05.08.723047"
+  url: "https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2"
+  notes: "Preprint."

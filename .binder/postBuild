@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# Binder post-build hook. Currently nothing needed beyond the requirements
-# file; reserved for future setup (compiling extensions, fetching extra
-# datasets, etc.).
-set -euo pipefail
-echo "vagus_nerve_explorer postBuild: nothing to do."

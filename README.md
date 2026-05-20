@@ -1,12 +1,13 @@
 # Vagus Nerve Atlas Explorer
 
+[![Open Atlas Explorer](https://img.shields.io/badge/%E2%96%B6%20Atlas%20Explorer-Launch%20interactive%20tool-2ea44f?style=for-the-badge)](https://drsiyarb.github.io/vagus_nerve_explorer/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/drsiyarb/vagus_nerve_explorer/main?filepath=paper_figures_reproducible.ipynb)
 [![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
 [![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 Interactive browser-based atlas and full reproducibility companion for the manuscript
 
-> **A standardized map of human vagus nerve branch emergence defines anatomical targets for function-selective neuromodulation** (submitted, 2026).
+> Bahadir, S. *A standardized, surgically relevant map of organ-specific branch emergence in the human vagus nerve.* bioRxiv, 2026. doi:[10.64898/2026.05.08.723047](https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2)
 
 The atlas describes **28 donors · 56 nerves · 2,177 branches** mapped along a side-specific landmark-anchored cervico-thoracic axis. This repository contains every input, every output, and every line of code needed to regenerate every figure and table in the manuscript from raw inputs.
 
@@ -156,7 +157,12 @@ vagus_nerve_explorer/
 
 If you use the dataset, the explorer, or the reproducibility notebook in published work, please cite:
 
-1. **The manuscript** (when published — DOI to be added)
+1. **The preprint** —
+
+   > Bahadir, S. *A standardized, surgically relevant map of organ-specific branch emergence in the human vagus nerve.* bioRxiv, 2026. doi:[10.64898/2026.05.08.723047](https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2)
+
+   (The peer-reviewed version will be added here on publication; the bioRxiv DOI continues to resolve.)
+
 2. **This repository** — GitHub renders a "Cite this repository" button from `CITATION.cff`; for static citation:
 
    > Bahadir, S. *Vagus Nerve Atlas Explorer*. GitHub, 2026. https://github.com/drsiyarb/vagus_nerve_explorer
