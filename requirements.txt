@@ -1,0 +1,30 @@
+# Python dependencies for paper_figures_reproducible.ipynb and
+# interactive_explorer/build_atlas_data.py.
+#
+# Tested with Python 3.11. Install with:
+#   pip install -r requirements.txt
+#
+# Versions are pinned to the lower bound known to work; newer versions
+# in the same minor track are expected to be compatible.
+
+# Core scientific stack
+numpy>=1.24,<2.1
+pandas>=2.0,<2.3
+scipy>=1.11,<1.15
+
+# Plotting
+matplotlib>=3.7,<3.10
+seaborn>=0.13,<0.14
+
+# Spreadsheet I/O
+openpyxl>=3.1,<3.2
+xlrd>=2.0,<2.1
+
+# Notebook execution
+jupyter>=1.0
+ipykernel>=6.25
+notebook>=7.0
+
+# Optional: only needed if you want to use the explorer's data-rebuild script
+# (interactive_explorer/build_atlas_data.py)
+# Already covered by pandas + numpy + openpyxl above.
