@@ -2,8 +2,7 @@
 
 [![Open Atlas Explorer](https://img.shields.io/badge/%E2%96%B6%20Atlas%20Explorer-Launch%20interactive%20tool-2ea44f?style=for-the-badge)](https://drsiyarb.github.io/vagus_nerve_explorer/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/drsiyarb/vagus_nerve_explorer/main?filepath=paper_figures_reproducible.ipynb)
-[![License: MIT](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](LICENSE)
-[![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![License](https://img.shields.io/badge/License-All%20Rights%20Reserved%20(pre--publication)-lightgrey.svg)](LICENSE)
 
 Interactive browser-based atlas and full reproducibility companion for the manuscript
 
@@ -173,15 +172,18 @@ A frozen, citable version (with DOI) is also archived on Zenodo (DOI added upon 
 
 ## License
 
-- **Code** — MIT License (see [`LICENSE`](LICENSE))
-- **Anatomical dataset and figures** — Creative Commons Attribution 4.0 International (CC BY 4.0)
+**All Rights Reserved (pre-publication).**
 
-Both licenses require attribution; please cite the manuscript and this repository.
+This repository is made available for peer review and personal academic inspection only. No license is granted to copy, modify, redistribute, sublicense, host, fork-and-publish, train machine-learning models on, or otherwise use any part of this repository beyond that scope without prior written permission. See [`LICENSE`](LICENSE) for the full notice.
+
+A formal open-source / open-data license — anticipated **MIT** for code and **CC BY 4.0** for the dataset — will be applied to the repository upon publication of the peer-reviewed manuscript.
+
+For permission requests, please contact the corresponding author of the manuscript above.
 
 ---
 
-## Questions, issues, contributions
+## Questions and issues
 
 Open an issue on GitHub: https://github.com/drsiyarb/vagus_nerve_explorer/issues
 
-Pull requests are welcome — particularly for additional analyses, alternative visualizations, or extensions to other cohorts using the same registration scheme.
+(Pull requests are not solicited at this time; the repository is in pre-publication review.)

@@ -1,32 +1,25 @@
-MIT License
+All Rights Reserved
 
-Copyright (c) 2026 Siyar Bahadir and the vagus_nerve_explorer authors
+Copyright (c) 2026 Siyar Bahadir and the Vagus Nerve Atlas Explorer authors.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This repository — including all source code, the interactive explorer, the
+anatomical dataset, all derived figures and tables, and the reproducibility
+notebook — is made available solely for the purposes of peer review and
+personal academic inspection associated with the manuscript:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+    Bahadir, S. "A standardized, surgically relevant map of organ-specific
+    branch emergence in the human vagus nerve." bioRxiv, 2026.
+    doi:10.64898/2026.05.08.723047
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+All other rights are reserved. No license is granted, expressed or implied,
+to copy, modify, redistribute, sublicense, host, fork-and-publish, train
+machine learning models on, or otherwise use any part of this repository
+for any other purpose without prior written permission from the copyright
+holder.
 
-----------------------------------------------------------------------
+A formal open-source / open-data license (anticipated MIT for code and
+CC BY 4.0 for the dataset) will be applied to this repository upon
+publication of the peer-reviewed manuscript.
 
-The accompanying anatomical dataset (the .xlsx files in this repository and
-the data embedded in `interactive_explorer/vagus_atlas_data.js`) is released
-separately under the Creative Commons Attribution 4.0 International License
-(CC BY 4.0). The full license text is available at
-https://creativecommons.org/licenses/by/4.0/legalcode.
-
-When using the dataset, please cite the accompanying manuscript (see
-CITATION.cff for the canonical citation).
+For permission requests, please contact the corresponding author of the
+manuscript named above.
