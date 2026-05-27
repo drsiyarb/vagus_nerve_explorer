@@ -3,8 +3,8 @@ message: "If you use this software or dataset, please cite the accompanying manu
 title: "Vagus Nerve Atlas Explorer: a standardized map of human vagus nerve branch emergence"
 abstract: >
   Interactive browser-based atlas and reproducibility companion for the
-  manuscript "A standardized map of human vagus nerve branch emergence
-  defines anatomical targets for function-selective neuromodulation".
+  manuscript "A standardized, surgically relevant map of emergence of
+  organ-specific branches in the human vagus nerve".
   The explorer exposes a registered, landmark-anchored cohort of 28
   human vagus nerves (56 nerves, 2,177 branches) through filters for
   donor, side, sex, supergroup, and subgroup, with four coupled
@@ -40,7 +40,7 @@ date-released: "2026-05-15"
 # preprint after publication).
 preferred-citation:
   type: article
-  title: "A standardized, surgically relevant map of organ-specific branch emergence in the human vagus nerve"
+  title: "A standardized, surgically relevant map of emergence of organ-specific branches in the human vagus nerve"
   authors:
     - family-names: "Bahadir"
       given-names: "Siyar"

@@ -6,7 +6,7 @@
 
 Interactive browser-based atlas and full reproducibility companion for the manuscript
 
-> Bahadir, S. *A standardized, surgically relevant map of organ-specific branch emergence in the human vagus nerve.* bioRxiv, 2026. doi:[10.64898/2026.05.08.723047](https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2)
+> Bahadir, S. *A standardized, surgically relevant map of emergence of organ-specific branches in the human vagus nerve.* bioRxiv, 2026. doi:[10.64898/2026.05.08.723047](https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2)
 
 The atlas describes **28 donors · 56 nerves · 2,177 branches** mapped along a side-specific landmark-anchored cervico-thoracic axis. This repository contains every input, every output, and every line of code needed to regenerate every figure and table in the manuscript from raw inputs.
 
@@ -159,7 +159,7 @@ If you use the dataset, the explorer, or the reproducibility notebook in publish
 
 1. **The preprint** —
 
-   > Bahadir, S. *A standardized, surgically relevant map of organ-specific branch emergence in the human vagus nerve.* bioRxiv, 2026. doi:[10.64898/2026.05.08.723047](https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2)
+   > Bahadir, S. *A standardized, surgically relevant map of emergence of organ-specific branches in the human vagus nerve.* bioRxiv, 2026. doi:[10.64898/2026.05.08.723047](https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2)
 
    (The peer-reviewed version will be added here on publication; the bioRxiv DOI continues to resolve.)
 
