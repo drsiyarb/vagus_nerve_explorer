@@ -1,7 +1,7 @@
 # Vagus Nerve Atlas Explorer
 
 [![Open Atlas Explorer](https://img.shields.io/badge/%E2%96%B6%20Atlas%20Explorer-Launch%20interactive%20tool-2ea44f?style=for-the-badge)](https://drsiyarb.github.io/vagus_nerve_explorer/)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/drsiyarb/vagus_nerve_explorer/main?filepath=paper_figures_reproducible.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/drsiyarb/vagus_nerve_explorer/main?filepath=paper/paper_figures_reproducible.ipynb)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved%20(pre--publication)-lightgrey.svg)](LICENSE)
 
 Interactive browser-based atlas and full reproducibility companion for the manuscript
@@ -17,13 +17,13 @@ The atlas describes **28 donors · 56 nerves · 2,177 branches** mapped along a 
 | | |
 |---|---|
 | 🔬 **Live atlas explorer** | [drsiyarb.github.io/vagus_nerve_explorer](https://drsiyarb.github.io/vagus_nerve_explorer/) — no install required |
-| 📓 **Reproducibility notebook** | [`paper_figures_reproducible.ipynb`](paper_figures_reproducible.ipynb) regenerates every paper figure and table |
-| 📦 **Published dataset** | [`vagus_atlas_dataset.xlsx`](vagus_atlas_dataset.xlsx) (28 donors, 2,177 branches + 168 landmark rows) |
-| 🧮 **Analysis-ready dataset** | [`vagus_atlas_analysis.xlsx`](vagus_atlas_analysis.xlsx) (registered & filtered, used by both notebook and explorer) |
-| 📐 **Registration scaffold** | [`vagus_segment_scaffold_from_dd.xlsx`](vagus_segment_scaffold_from_dd.xlsx) (per-nerve segment lengths) |
-| 📊 **Figures** | `Fig2_…/` through `Fig7_…/` — PNG + SVG of every main figure |
-| 📋 **Tables** | `Tables/` (Table 1) and `Supplementary_tables/` (S1–S7) |
-| 💻 **Explorer source** | `interactive_explorer/` (`vagus_atlas_explorer.html`, `vagus_atlas_data.js`, `build_atlas_data.py`) |
+| 📓 **Reproducibility notebook** | [`paper/paper_figures_reproducible.ipynb`](paper/paper_figures_reproducible.ipynb) regenerates every paper figure and table |
+| 📦 **Published dataset** | [`paper/vagus_atlas_dataset.xlsx`](paper/vagus_atlas_dataset.xlsx) (28 donors, 2,177 branches + 168 landmark rows) |
+| 🧮 **Analysis-ready dataset** | [`paper/vagus_atlas_analysis.xlsx`](paper/vagus_atlas_analysis.xlsx) (registered & filtered, used by both notebook and explorer) |
+| 📐 **Registration scaffold** | [`paper/vagus_segment_scaffold_from_dd.xlsx`](paper/vagus_segment_scaffold_from_dd.xlsx) (per-nerve segment lengths) |
+| 📊 **Figures** | `paper/Fig2_…/` through `paper/Fig7_…/` — PNG + SVG of every main figure |
+| 📋 **Tables** | `paper/Tables/` (Table 1) and `paper/Supplementary_tables/` (S1–S7) |
+| 💻 **Explorer source** | `explorer/` (`index.html`, `vagus_atlas_data.js`, `build_atlas_data.py`) |
 
 ---
 
@@ -32,7 +32,7 @@ The atlas describes **28 donors · 56 nerves · 2,177 branches** mapped along a 
 ```bash
 git clone https://github.com/drsiyarb/vagus_nerve_explorer.git
 cd vagus_nerve_explorer
-pip install -r requirements.txt && jupyter notebook paper_figures_reproducible.ipynb
+pip install -r requirements.txt && jupyter notebook paper/paper_figures_reproducible.ipynb
 ```
 
 In the notebook: Kernel → Restart & Run All. Total runtime is 1–2 minutes on a modern laptop. Outputs land in the corresponding figure / table subfolders alongside the notebook.
@@ -46,7 +46,7 @@ Click the Binder badge above. You get a live Jupyter notebook in your browser; p
 ```bash
 conda env create -f environment.yml
 conda activate vagus-atlas
-jupyter notebook paper_figures_reproducible.ipynb
+jupyter notebook paper/paper_figures_reproducible.ipynb
 ```
 
 ---
@@ -67,7 +67,7 @@ If you just want to slice the data without running code, open the explorer URL a
 To regenerate the explorer's data file from a re-run of the analysis notebook:
 
 ```bash
-python interactive_explorer/build_atlas_data.py
+python explorer/build_atlas_data.py
 ```
 
 ---
@@ -90,7 +90,7 @@ The full methodology is in the manuscript; the notebook is the executable refere
 
 ## Data dictionary
 
-The primary dataset (`vagus_atlas_dataset.xlsx`, also referenced as `Sheet1`) has the following columns:
+The primary dataset (`paper/vagus_atlas_dataset.xlsx`, also referenced as `Sheet1`) has the following columns:
 
 | Column | Type | Meaning |
 |---|---|---|
@@ -128,24 +128,25 @@ vagus_nerve_explorer/
 ├── environment.yml                             (conda dependencies)
 ├── runtime.txt                                 (Python version pin for Binder)
 ├── index.html                                  (Pages root → redirects to explorer)
-├── paper_figures_reproducible.ipynb            (regenerates everything)
-├── vagus_atlas_dataset.xlsx                    (published cohort, primary)
-├── vagus_atlas_full.xlsx                       (cohort + landmarks merged)
-├── vagus_atlas_analysis.xlsx                   (analysis-ready, registered)
-├── vagus_segment_scaffold_from_dd.xlsx         (per-nerve segment lengths)
-├── overview_table_registered_v2_tiefix.csv     (per-nerve summary)
-├── supp_table_S7_noncanonical_landmark_ordering.csv
-├── Fig2_group_distributions/                   (PNG + SVG per figure)
-├── Fig3_subway_map/
-├── Fig4_subgroup_violins/
-├── Fig5_regional_divisions/
-├── Fig6_branch_free_intervals/
-├── Fig7_selectivity/
-├── Tables/                                     (Table 1)
-├── Supplementary_tables/                       (Supp Tables 1–6)
-├── interactive_explorer/                       (the live atlas explorer)
-│   ├── vagus_atlas_explorer.html
-│   ├── vagus_atlas_data.js                     (generated)
+├── paper/                                      (manuscript reproducibility)
+│   ├── paper_figures_reproducible.ipynb        (regenerates everything)
+│   ├── vagus_atlas_dataset.xlsx                (published cohort, primary)
+│   ├── vagus_atlas_full.xlsx                   (cohort + landmarks merged)
+│   ├── vagus_atlas_analysis.xlsx               (analysis-ready, registered)
+│   ├── vagus_segment_scaffold_from_dd.xlsx     (per-nerve segment lengths)
+│   ├── overview_table_registered_v2_tiefix.csv (per-nerve summary)
+│   ├── supp_table_S7_noncanonical_landmark_ordering.csv
+│   ├── Fig2_group_distributions/               (PNG + SVG per figure)
+│   ├── Fig3_subway_map/
+│   ├── Fig4_subgroup_violins/
+│   ├── Fig5_regional_divisions/
+│   ├── Fig6_branch_free_intervals/
+│   ├── Fig7_selectivity/
+│   ├── Tables/                                 (Table 1)
+│   └── Supplementary_tables/                   (Supp Tables 1–6)
+├── explorer/                                   (the live atlas explorer)
+│   ├── index.html                              (the explorer app)
+│   ├── vagus_atlas_data.js                     (generated data payload)
 │   └── build_atlas_data.py                     (regenerates the .js)
 └── .binder/                                    (Binder configuration)
 ```

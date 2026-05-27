@@ -28,7 +28,7 @@ import pandas as pd
 # Paths
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-ANALYSIS_XLSX = PROJECT_ROOT / "vagus_atlas_analysis.xlsx"
+ANALYSIS_XLSX = PROJECT_ROOT / "paper" / "vagus_atlas_analysis.xlsx"
 OUT_JS = Path(__file__).resolve().parent / "vagus_atlas_data.js"
 
 # ---------------------------------------------------------------------------
