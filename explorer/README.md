@@ -2,11 +2,9 @@
 
 This folder holds the source for the **live interactive atlas explorer**.
 
-> If you just want to use the tool, you don't need to clone or run anything — open it in your browser:
->
-> **[drsiyarb.github.io/vagus_nerve_explorer](https://drsiyarb.github.io/vagus_nerve_explorer/)**
+[![Open Atlas Explorer](https://img.shields.io/badge/%E2%96%B6%20Atlas%20Explorer-Launch%20interactive%20tool-2ea44f?style=for-the-badge)](https://drsiyarb.github.io/vagus_nerve_explorer/)
 
-The site above is served directly from this folder by GitHub Pages.
+You don't need to clone or run anything — the button above opens it in your browser. The site is served directly from this folder by GitHub Pages.
 
 ---
 
