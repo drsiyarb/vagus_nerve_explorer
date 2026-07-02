@@ -2532,11 +2532,11 @@
             const fillF = lighten(color, 0.45);
             const fillM = darken(color, 0.10);
             const lineM = darken(color, 0.25);
-            const xF = [], yF = [], hF = [];
-            const xM = [], yM = [], hM = [];
+            const xF = [], yF = [], hF = [], sF = [];
+            const xM = [], yM = [], hM = [], sM = [];
             for (let k = 0; k < data.x.length; k++) {
-              if (data.sex[k] === 'F') { xF.push(data.x[k]); yF.push(data.y[k]); hF.push(data.hover[k]); }
-              else if (data.sex[k] === 'M') { xM.push(data.x[k]); yM.push(data.y[k]); hM.push(data.hover[k]); }
+              if (data.sex[k] === 'F') { xF.push(data.x[k]); yF.push(data.y[k]); hF.push(data.hover[k]); sF.push(data.subj[k]); }
+              else if (data.sex[k] === 'M') { xM.push(data.x[k]); yM.push(data.y[k]); hM.push(data.hover[k]); sM.push(data.subj[k]); }
             }
             // Seed bases per side+sex+supergroup so jitter is stable across renders
             const seedF = (side === 'L' ? 1000 : 2000) + (g.length * 41) + 17;
@@ -2563,9 +2563,9 @@
               traces.push({
                 type: 'scatter', mode: 'markers',
                 x: xF, y: yF.map((y, k) => y + jitter(seedF + k, 0.05, 0.55)),
-                xaxis: xName, yaxis: yName, text: hF,
+                xaxis: xName, yaxis: yName, text: hF, customdata: sF,
                 marker: { size: 3, color: darken(color, 0.10), opacity: 0.55, line: { width: 0 } },
-                hovertemplate: '<b>' + g + '</b> · F<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+                hovertemplate: '<b>' + g + '</b> · F<br>%{text}<br>%{x:.2f} cm<br><span style="color:#0b6b53">click → open SPARC dataset ↗</span><extra></extra>',
                 showlegend: false,
                 legendgroup: 'sg-' + g + '-F',
               });
@@ -2592,9 +2592,9 @@
               traces.push({
                 type: 'scatter', mode: 'markers',
                 x: xM, y: yM.map((y, k) => y + jitter(seedM + k, -0.55, -0.05)),
-                xaxis: xName, yaxis: yName, text: hM,
+                xaxis: xName, yaxis: yName, text: hM, customdata: sM,
                 marker: { size: 3, color: darken(color, 0.25), opacity: 0.55, line: { width: 0 } },
-                hovertemplate: '<b>' + g + '</b> · M<br>%{text}<br>%{x:.2f} cm<extra></extra>',
+                hovertemplate: '<b>' + g + '</b> · M<br>%{text}<br>%{x:.2f} cm<br><span style="color:#0b6b53">click → open SPARC dataset ↗</span><extra></extra>',
                 showlegend: false,
                 legendgroup: 'sg-' + g + '-M',
               });
@@ -2622,9 +2622,9 @@
             traces.push({
               type: 'scatter', mode: 'markers',
               x: data.x, y: data.y.map((y, k) => y + jitter(seedB + k, -0.55, 0.55)),
-              xaxis: xName, yaxis: yName, text: data.hover,
+              xaxis: xName, yaxis: yName, text: data.hover, customdata: data.subj,
               marker: { size: 3, color: darken(color, 0.15), opacity: 0.50, line: { width: 0 } },
-              hovertemplate: '<b>' + g + '</b><br>%{text}<br>%{x:.2f} cm<extra></extra>',
+              hovertemplate: '<b>' + g + '</b><br>%{text}<br>%{x:.2f} cm<br><span style="color:#0b6b53">click → open SPARC dataset ↗</span><extra></extra>',
               showlegend: false,
               legendgroup: 'sg-' + g,
             });
@@ -2692,7 +2692,22 @@
       }
 
       Plotly.react('fig-violins', traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+      bindVioDatasetClick();
       meta.textContent = 'Atlas · Top-25 subgroups · supergroup colors · paper Fig 2' + (sel.sexSplit ? ' · Sex-split ON' : '');
+    }
+
+    // Click a distribution dot -> open that donor's published SPARC dataset
+    // (mirrors the Individual Branches view). Dots carry the donor f-number in
+    // customdata; violin bodies have none, so clicking them is a no-op.
+    function bindVioDatasetClick() {
+      const gd = document.getElementById('fig-violins');
+      if (!gd || gd._sparcClickBound) return;
+      gd._sparcClickBound = true;
+      gd.on('plotly_click', (ev) => {
+        if (!ev || !ev.points || !ev.points.length) return;
+        const id = ev.points[0] && ev.points[0].customdata;
+        if (id) window.openDonorDataset(id);
+      });
     }
 
     // -----------------------------------------------
@@ -2870,6 +2885,7 @@
       }
 
       Plotly.react('fig-violins', traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+      bindVioDatasetClick();
       meta.textContent = 'Pools comparison · ' + N + ' pool' + (N === 1 ? '' : 's') + (sel.sexSplit ? ' · Sex-split ON' : '');
     }
 
