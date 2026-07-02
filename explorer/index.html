@@ -6,6 +6,27 @@
 <title>Vagus Atlas Explorer</title>
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" charset="utf-8"></script>
 <script src="vagus_atlas_data.js"></script>
+<script>
+/* ============================================================
+   SPARC dataset linkage helpers (shared across all panels).
+   Each donor object carries `cid` (original identifier) and `doi`
+   (its published SPARC dataset). These helpers let any panel turn a
+   donor f-number into a clickable link to that dataset.
+   ============================================================ */
+(function () {
+  var D = window.atlasData || {};
+  var byId = {};
+  (D.donors || []).forEach(function (d) { byId[d.id] = d; });
+  window.donorById = function (id) { return byId[id] || null; };
+  window.donorDoi  = function (id) { var d = byId[id]; return (d && d.doi) ? d.doi : null; };
+  window.openDonorDataset = function (id) {
+    var u = window.donorDoi(id);
+    if (u) window.open(u, '_blank', 'noopener');
+  };
+  window.sparcCollectionDoi =
+    (D.meta && D.meta.sparc_collection_doi) || 'https://doi.org/10.26275/5uci-o3pe';
+})();
+</script>
 <style>
   /* ==========================================================
      RESET + TYPOGRAPHY
@@ -79,6 +100,50 @@
     border: 1px solid #e0e0e0;
   }
   header .header-link:hover { background: #fafafa; }
+  header .header-link-sparc {
+    color: #0b6b53;
+    border-color: #bfe3d8;
+    background: #f0faf6;
+    font-weight: 600;
+  }
+  header .header-link-sparc:hover { background: #e2f4ee; }
+
+  /* Donor -> SPARC dataset links */
+  .donor-doi-link {
+    font-size: 11px;
+    color: #0b6b53;
+    text-decoration: none;
+    padding: 3px 8px;
+    margin-left: 6px;
+    border-radius: 7px;
+    border: 1px solid #bfe3d8;
+    background: #f0faf6;
+    white-space: nowrap;
+  }
+  .donor-doi-link:hover { background: #e2f4ee; }
+  .donor-doi-link[hidden] { display: none; }
+  /* clickable donor id text (placeholder list, individual header) */
+  .donor-link {
+    color: #0b6b53;
+    text-decoration: none;
+    border-bottom: 1px dotted #0b6b53;
+    cursor: pointer;
+  }
+  .donor-link:hover { color: #08543f; border-bottom-style: solid; }
+  /* explanatory note pointing to SPARC datasets */
+  .sparc-note {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #555;
+    background: #f0faf6;
+    border: 1px solid #d6efe6;
+    border-left: 3px solid #0b6b53;
+    border-radius: 8px;
+    padding: 9px 12px;
+    margin: 10px 0 4px 0;
+  }
+  .sparc-note a { color: #0b6b53; font-weight: 600; text-decoration: none; }
+  .sparc-note a:hover { text-decoration: underline; }
 
   /* ==========================================================
      SIDEBAR
@@ -1010,6 +1075,7 @@
       <div class="spacer"></div>
       <a href="https://www.biorxiv.org/content/10.64898/2026.05.08.723047v2" class="header-link" title="Preprint on bioRxiv (peer-reviewed DOI will replace on publication)" target="_blank" rel="noopener">Manuscript (preprint)</a>
       <a href="https://github.com/drsiyarb/vagus_nerve_explorer" class="header-link" title="Source code &amp; data for reproducibility" target="_blank" rel="noopener">Source code &amp; data</a>
+      <a href="https://doi.org/10.26275/5uci-o3pe" class="header-link header-link-sparc" title="Open the full donor dataset collection on the SPARC Portal" target="_blank" rel="noopener">Explore on SPARC portal ↗</a>
     </header>
 
     <!-- =================================================
@@ -1132,6 +1198,8 @@
             <option value="">— All donors —</option>
             <!-- populated by JS from atlasData.donors -->
           </select>
+          <a id="subject-doi-link" class="donor-doi-link" href="#" target="_blank" rel="noopener"
+             title="Open this donor's published dataset on the SPARC Portal" hidden>Open dataset on SPARC portal ↗</a>
         </div>
 
         <div class="filter-group">
@@ -1146,6 +1214,14 @@
 
       <!-- ----- Subgroup picker (second-row, appears when a supergroup chevron is open) ----- -->
       <div class="filter-subbar" id="subgroup-subbar"></div>
+
+      <!-- ----- SPARC dataset linkage note ----- -->
+      <div class="sparc-note">
+        Donor labels (<b>f001–f029</b>) match the published datasets on the SPARC Portal.
+        Click any donor label or data point to open that donor's dataset, pick a donor above and use
+        <b>“Open dataset on SPARC portal”</b>, or
+        <a href="https://doi.org/10.26275/5uci-o3pe" target="_blank" rel="noopener">explore the full collection ↗</a>.
+      </div>
 
       <!-- ----- Panel area ----- -->
       <div class="panel-area">
@@ -1643,9 +1719,27 @@
     });
 
     // ---- Subject dropdown (donor mode) ----
+    // Update the "Open dataset on SPARC portal" link beside the donor dropdown
+    function updateSubjectDoiLink(id) {
+      const link = document.getElementById('subject-doi-link');
+      if (!link) return;
+      const doi = id ? window.donorDoi(id) : null;
+      if (doi) {
+        link.href = doi;
+        const donor = window.donorById(id);
+        link.title = 'Open donor ' + id + (donor && donor.cid ? ' (' + donor.cid + ')' : '') +
+                     ' dataset on the SPARC Portal';
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+        link.removeAttribute('href');
+      }
+    }
+
     document.getElementById('subject-select').addEventListener('change', (e) => {
       const v = e.target.value;
       state.filters.subject = v === '' ? null : v;
+      updateSubjectDoiLink(state.filters.subject);
       emit({ kind: 'subject', value: state.filters.subject });
       renderDebug();
     });
@@ -1665,6 +1759,7 @@
       refreshSupergroupChips();
       buildSubgroupSubbar();
       document.getElementById('subject-select').value = '';
+      updateSubjectDoiLink(null);
 
       emit({ kind: 'reset' });
       renderDebug();
@@ -3155,14 +3250,17 @@
       for (const sg of D.meta.group_order) {
         const sgIdx = idx.filter(i => b.group[i] === sg);
         if (!sgIdx.length) continue;
-        const xs = [], ys = [], texts = [];
+        const xs = [], ys = [], texts = [], cds = [];
         for (const i of sgIdx) {
           const key = `${b.subject[i]}|${b.side[i]}`;
           const lane = laneSet.get(key);
           if (lane == null) continue;
           xs.push(b[distKey][i]);
           ys.push(lane + jitter(i));
-          texts.push(`${b.name[i]}<br><i>${b.group[i]} — ${b.subgroup[i]}</i><br>${b.subject[i]} ${b.side[i]} (${b.sex[i] || '?'})`);
+          const donor = window.donorById(b.subject[i]);
+          const cidTag = donor && donor.cid ? ` <span style="color:#888">(${donor.cid})</span>` : '';
+          texts.push(`${b.name[i]}<br><i>${b.group[i]} — ${b.subgroup[i]}</i><br>${b.subject[i]}${cidTag} ${b.side[i]} (${b.sex[i] || '?'})<br><span style="color:#0b6b53">click → open SPARC dataset ↗</span>`);
+          cds.push(b.subject[i]);
         }
         traces.push({
           x: xs, y: ys, mode: 'markers',
@@ -3171,6 +3269,7 @@
             size: 7, color: SG_COLOR[sg], opacity: 0.85,
             line: { color: 'rgba(0,0,0,0.5)', width: 0.5 },
           },
+          customdata: cds,
           text: texts, hovertemplate: '%{text}<br>x = %{x:.2f} cm<extra></extra>',
         });
       }
@@ -3224,6 +3323,35 @@
       };
 
       Plotly.react(containerId, traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] });
+
+      // Click a branch mark -> open that donor's published SPARC dataset
+      const gd = document.getElementById(containerId);
+      if (gd && !gd._sparcClickBound) {
+        gd._sparcClickBound = true;
+        gd.on('plotly_click', (ev) => {
+          if (!ev || !ev.points || !ev.points.length) return;
+          const pt = ev.points[0];
+          const id = pt && pt.customdata;
+          if (id) window.openDonorDataset(id);
+        });
+      }
+      // Make the donor lane labels (y-axis ticks) clickable -> dataset
+      if (gd) {
+        setTimeout(() => {
+          const nodes = gd.querySelectorAll('.yaxislayer-above .ytick text, g.yaxislayer .ytick text');
+          nodes.forEach((node) => {
+            const m = (node.textContent || '').match(/f0\d\d/);
+            if (!m) return;
+            const id = m[0];
+            if (!window.donorDoi(id)) return;
+            node.style.cursor = 'pointer';
+            if (!node._sparcBound) {
+              node._sparcBound = true;
+              node.addEventListener('click', () => window.openDonorDataset(id));
+            }
+          });
+        }, 60);
+      }
     }
 
     function renderIndividual() {

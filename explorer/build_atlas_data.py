@@ -3,7 +3,7 @@ build_atlas_data.py
 -------------------
 Reads the manuscript-canonical ANALYSIS Excel workbook and emits
 `vagus_atlas_data.js` — a single JS file that defines `window.atlasData`,
-consumed by `vagus_atlas_explorer.html`.
+consumed by `index.html` (the interactive explorer).
 
 Aligns with the manuscript pipeline:
   - Source: vagus_atlas_analysis.xlsx
@@ -12,6 +12,10 @@ Aligns with the manuscript pipeline:
                     Multiple Targets (+ Landmark rows treated separately)
   - Side-specific cohort template anchors (U_t, M_t, D_t, E_t) are computed
     here as the mean across donors per side.
+  - SPARC linkage: the workbook carries `SPARC Subject` (lowercase f-numbers
+    matching the published SPARC datasets) and `Dataset DOI` columns. The
+    working `Subject` key is switched to the f-number; the original CID and the
+    per-donor DOI are retained on each donor for dataset linking.
 
 Run:
     python build_atlas_data.py
@@ -30,6 +34,8 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ANALYSIS_XLSX = PROJECT_ROOT / "paper" / "vagus_atlas_analysis.xlsx"
 OUT_JS = Path(__file__).resolve().parent / "vagus_atlas_data.js"
+
+SPARC_COLLECTION_DOI = "https://doi.org/10.26275/5uci-o3pe"
 
 # ---------------------------------------------------------------------------
 # Canonical group order (manuscript-aligned)
@@ -71,9 +77,28 @@ def main():
     df["Side"] = df["Side"].astype(str).str.strip().str.upper().str[0]
 
     # Strip whitespace on key string columns
-    for c in ["Group", "Subgroup", "(REVA) Branch Name", "Subject", "Sex"]:
+    for c in ["Group", "Subgroup", "(REVA) Branch Name", "Subject", "Sex", "SPARC Subject", "Dataset DOI"]:
         if c in df.columns:
             df[c] = df[c].astype(str).str.strip()
+
+    # -----------------------------------------------------------------------
+    # SPARC relabel: switch the working `Subject` key to the f-number
+    # (SPARC Subject column) so every downstream label uses it, while keeping
+    # the original CID and the DOI for linking.
+    # -----------------------------------------------------------------------
+    doi_by_id = {}
+    cid_by_id = {}
+    if "SPARC Subject" in df.columns:
+        df["CID"] = df["Subject"]
+        df["Subject"] = df["SPARC Subject"]
+        _uniq = df.dropna(subset=["Subject"]).drop_duplicates(subset=["Subject"])
+        cid_by_id = dict(zip(_uniq["Subject"], _uniq["CID"]))
+        if "Dataset DOI" in df.columns:
+            doi_by_id = {
+                k: (None if (v is None or str(v).strip().lower() in ("", "nan")) else str(v).strip())
+                for k, v in zip(_uniq["Subject"], _uniq["Dataset DOI"])
+            }
+        print(f"  -> relabeled subjects to SPARC f-numbers ({len(cid_by_id)} donors)")
 
     # ---------------------------------------------------------------------
     # 1) Donor demographics table  (one row per Subject)
@@ -103,8 +128,11 @@ def main():
         # HIPAA-style age capping: 90+ for any age >= 90
         if "Age" in rec and isinstance(rec["Age"], (int, float)) and rec["Age"] >= 90:
             rec["Age"] = "90+"
+        # SPARC linkage: original CID + published dataset DOI
+        rec["cid"] = cid_by_id.get(rec["id"])
+        rec["doi"] = doi_by_id.get(rec["id"])
         donors_records.append(rec)
-    print(f"  → {len(donors_records)} donors")
+    print(f"  -> {len(donors_records)} donors")
 
     # ---------------------------------------------------------------------
     # 2) Per-nerve landmark anchors (raw + registered)
@@ -166,7 +194,7 @@ def main():
         )
         nerves.append(rec)
     nerves.sort(key=lambda r: (r["subject"], r["side"]))
-    print(f"  → {len(nerves)} (subject, side) nerves")
+    print(f"  -> {len(nerves)} (subject, side) nerves")
 
     # ---------------------------------------------------------------------
     # 3) Cohort template anchors (mean per side across donors)
@@ -178,11 +206,6 @@ def main():
         m_vals = [n["lm_raw"]["M"] for n in side_nerves if "M" in n["lm_raw"]]
         d_vals = [n["lm_raw"]["D"] for n in side_nerves if "D" in n["lm_raw"]]
         e_vals = [n["total_length"] for n in side_nerves if n["total_length"] is not None]
-        # By design of the piecewise-linear registration, every nerve's U/M/D maps
-        # exactly onto the cohort means of raw U/M/D. So the registered anchors
-        # equal the raw cohort means — no need to recompute from registered_distance_v2
-        # of landmark rows (which are NaN by construction; landmarks are inputs to
-        # the registration, not outputs of it).
         u_t = round(float(np.mean(u_vals)), 3) if u_vals else None
         m_t = round(float(np.mean(m_vals)), 3) if m_vals else None
         d_t = round(float(np.mean(d_vals)), 3) if d_vals else None
@@ -191,13 +214,12 @@ def main():
             "raw":        {"U": u_t, "M": m_t, "D": d_t, "E": e_t, "n": len(side_nerves)},
             "registered": {"U": u_t, "M": m_t, "D": d_t, "E": e_t, "n": len(side_nerves)},
         }
-    print(f"  → anchors: L raw {anchors['L']['raw']},  R raw {anchors['R']['raw']}")
+    print(f"  -> anchors: L raw {anchors['L']['raw']},  R raw {anchors['R']['raw']}")
 
     # ---------------------------------------------------------------------
     # 4) Branch records (columnar layout for JSON compactness)
     # ---------------------------------------------------------------------
     branch_df = df[df["Group"].astype(str).str.strip() != "Landmark"].copy()
-    # Only keep rows with a registered_distance_v2 (drop missing)
     branch_df = branch_df.dropna(subset=["registered_distance_v2"])
 
     cols = {
@@ -212,9 +234,8 @@ def main():
         "zone":     branch_df["Zone"].where(branch_df["Zone"].notna(), None).tolist() if "Zone" in branch_df.columns else [None] * len(branch_df),
     }
     n_branches = len(cols["subject"])
-    print(f"  → {n_branches:,} branch records")
+    print(f"  -> {n_branches:,} branch records")
 
-    # Sanitize Nones for JSON
     def sanitize(v):
         if v is None: return None
         if isinstance(v, float) and (np.isnan(v) or np.isinf(v)): return None
@@ -237,7 +258,7 @@ def main():
     }
     for k, arr in lm_cols.items():
         lm_cols[k] = [sanitize(v) for v in arr]
-    print(f"  → {len(lm_cols['subject']):,} landmark records")
+    print(f"  -> {len(lm_cols['subject']):,} landmark records")
 
     # ---------------------------------------------------------------------
     # 6) Assemble + emit
@@ -251,6 +272,7 @@ def main():
             "n_landmarks": len(lm_cols["subject"]),
             "distance_column": "registered_distance_v2",
             "group_order": GROUP_ORDER,
+            "sparc_collection_doi": SPARC_COLLECTION_DOI,
             "generated": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         },
         "donors": donors_records,
@@ -260,17 +282,16 @@ def main():
         "landmarks": lm_cols,
     }
 
-    js_text = "/* AUTO-GENERATED by build_atlas_data.py — do not hand-edit */\n"
+    js_text = "/* AUTO-GENERATED by build_atlas_data.py - do not hand-edit */\n"
     js_text += "window.atlasData = "
     js_text += json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
     js_text += ";\n"
 
     OUT_JS.write_text(js_text, encoding="utf-8")
     size_kb = OUT_JS.stat().st_size / 1024
-    print(f"\n✓ wrote {OUT_JS.name}  ({size_kb:,.1f} KB)")
+    print(f"\n[ok] wrote {OUT_JS.name}  ({size_kb:,.1f} KB)")
     print(f"  meta: {payload['meta']}")
 
 
 if __name__ == "__main__":
     main()
-                                                                                                                                                                                                                                                                                                                                                                                      
