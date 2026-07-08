@@ -13,9 +13,6 @@ abstract: >
   figure and table in the manuscript from the same dataset the explorer
   reads.
 type: software
-# Pre-publication: no open-source license granted. A formal license (anticipated
-# MIT for code and CC BY 4.0 for the dataset) will be added upon publication.
-license: LicenseRef-AllRightsReserved
 repository-code: "https://github.com/drsiyarb/vagus_nerve_explorer"
 url: "https://drsiyarb.github.io/vagus_nerve_explorer/"
 authors:
