@@ -1,1 +1,55 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><title>Vagus Keeps the Time</title><link rel="stylesheet" href="style.css"></head><body><canvas id="c"></canvas><div class="title"><h1>Vagus Keeps the Time</h1><div class="sub">Each system reveals a different scale of vagal time.</div></div><div class="panel"><div class="switcher" id="nav"></div><div class="controls"><div class="head"><strong>SIMULATED TIME SPEED</strong><span class="readout" id="speedOut"></span></div><input id="speed" type="range" min="0" max="1000" value="330"><div class="scale"><span>1 s / s</span><span>1 h / s</span></div><div class="clock"><span>shared physiological time</span><b id="clock">00:00:00</b></div></div></div><div class="hint">Pinch or scroll to zoom · drag to pan · click to pause</div><div class="tip" id="tip"></div><div class="tour" id="tour"><strong id="tt"></strong><p id="tx"></p><div class="row"><span class="count" id="tc"></span><button id="tn">Next</button></div></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes">
+<title>Vagus Keeps the Time</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="title">
+  <h1>Vagus Keeps the Time</h1>
+  <div class="sub">Each system reveals a different scale of vagal time.</div>
+</div>
+
+<div class="panel">
+  <div class="carousel" id="carousel">
+    <button class="arrow" id="prev" aria-label="Previous system">‹</button>
+    <div class="carousel-label">
+      <span id="count">01 / 07</span>
+      <div class="system-row">
+        <i id="systemDot"></i>
+        <strong id="systemName">Cardiovascular</strong>
+      </div>
+    </div>
+    <button class="arrow" id="next" aria-label="Next system">›</button>
+  </div>
+
+  <div class="controls">
+    <div class="head">
+      <strong>SIMULATED TIME SPEED</strong>
+      <span class="readout" id="speedOut"></span>
+    </div>
+    <input id="speed" type="range" min="0" max="1000" value="330">
+    <div class="scale"><span>1 s / s</span><span>1 h / s</span></div>
+    <div class="clock">
+      <span>shared physiological time</span>
+      <b id="clock">00:00:00</b>
+    </div>
+  </div>
+</div>
+
+<div class="hint">Swipe or use arrows to switch · pinch or scroll to zoom · drag to pan · click to pause</div>
+<div class="tip" id="tip"></div>
+
+<div class="tour" id="tour">
+  <strong id="tt"></strong>
+  <p id="tx"></p>
+  <div class="row"><span class="count" id="tc"></span><button id="tn">Next</button></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
