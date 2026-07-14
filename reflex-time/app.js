@@ -93,9 +93,9 @@ function layoutFor(n,cr,full){
   return{rr:cr*.47,orbit:cr*.145,label:cr*.11};
 }
 function drawSystem(s,i,ox=0,oy=0,scale=1,full=false){
-  const n=s.r.length,cr=radius(n)*scale,L=layoutFor(n,cr,full),mobile=W<760;
+  const n=s.r.length,cr=radius(n)*scale,L=layoutFor(n,cr,full);
   ctx.beginPath();ctx.arc(ox,oy,cr,0,7);ctx.strokeStyle=`hsla(${s.h},55%,62%,.12)`;ctx.lineWidth=1/view.s;ctx.stroke();
-  if(full||!mobile)label(s.name.toUpperCase(),ox,oy-cr-38,full?16:20,650,.92);
+  if(full||W>=760)label(s.name.toUpperCase(),ox,oy-cr-38,full?16:20,650,.92);
   s.r.forEach((rf,j)=>{
     const a=-Math.PI/2+j*Math.PI*2/n,x=ox+Math.cos(a)*L.rr,y=oy+Math.sin(a)*L.rr,p=rf[1];
     const o=full?26+Math.min(12,Math.log10(p+1)*3):L.orbit;
@@ -136,11 +136,9 @@ c.onclick=()=>{if(!moved)paused=!paused};
 
 carousel.addEventListener("touchstart",e=>{if(e.touches.length===1)touchStart=e.touches[0].clientX},{passive:true});
 carousel.addEventListener("touchend",e=>{if(touchStart===null)return;const end=e.changedTouches[0].clientX,dx=end-touchStart;touchStart=null;if(Math.abs(dx)>38)select(active+(dx<0?1:-1))},{passive:true});
-c.addEventListener("touchstart",e=>{if(e.touches.length===1)touchStart=e.touches[0].clientX},{passive:true});
-c.addEventListener("touchend",e=>{if(touchStart===null)return;const end=e.changedTouches[0].clientX,dx=end-touchStart;touchStart=null;if(!moved&&Math.abs(dx)>70)select(active+(dx<0?1:-1))},{passive:true});
 
 const T=[
-["Switch","Use the large arrows—or swipe—to move between physiological systems.",()=>carousel],
+["Switch","Use the large arrows—or swipe on this control—to move between physiological systems.",()=>carousel],
 ["Slide","Use this slider to compress or expand physiological time.",()=>document.querySelector(".controls")]
 ];
 function showTour(){
