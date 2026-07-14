@@ -66,13 +66,12 @@ input[type=range]{width:100%;accent-color:#f3f5f7}
 
 <script>
 const SYSTEMS=[
-  {name:"Cardiovascular",hue:24,reflexes:[["Baroreflex",2],["Bezold–Jarisch reflex",12],["Oculocardiac reflex",15],["Trigeminocardiac reflex",18]]},
-  {name:"Respiratory",hue:66,reflexes:[["Respiratory sinus arrhythmia",4],["Pulmonary stretch reflex",5],["Chemoreflex",8],["Diving reflex",10]]},
-  {name:"Protective aerodigestive",hue:5,reflexes:[["Laryngeal closure reflex",3],["Cough reflex",6],["Gag reflex",5],["Swallowing reflex",8],["Nausea–vomiting reflex",90]]},
-  {name:"Gastrointestinal",hue:202,reflexes:[["Esophagogastric reflex",45],["Gastric accommodation",120],["Vagovagal gastric reflex",180],["Gastrocolic reflex",300],["Enterogastric reflex",420],["Ileogastric reflex",480]]},
-  {name:"Metabolic",hue:256,reflexes:[["Pancreatic secretory reflex",600],["Biliary vagal reflex",720],["Satiety reflex",900]]},
-  {name:"Immune",hue:312,reflexes:[["Inflammatory reflex",3600],["Splenic anti-inflammatory pathway",7200],["Sickness–recovery regulation",21600]]},
-  {name:"Somatovisceral",hue:160,reflexes:[["Auricular vagal reflex",25]]}
+  {name:"Cardiovascular",hue:24,reflexes:[["Baroreflex",2],["Bezold–Jarisch reflex",12]]},
+  {name:"Respiratory",hue:66,reflexes:[["Respiratory sinus arrhythmia",4],["Pulmonary stretch reflex",5],["Chemoreflex",8]]},
+  {name:"Protective aerodigestive",hue:5,reflexes:[["Laryngeal closure reflex",3],["Cough reflex",6],["Swallowing reflex",8],["Nausea–vomiting reflex",90]]},
+  {name:"Gastrointestinal",hue:202,reflexes:[["Gastric accommodation",120],["Vagovagal gastric reflex",180],["Gastrocolic reflex",300]]},
+  {name:"Metabolic",hue:256,reflexes:[["Pancreatic secretory reflex",600],["Satiety reflex",900]]},
+  {name:"Immune",hue:312,reflexes:[["Inflammatory reflex",3600]]}
 ];
 
 const canvas=document.getElementById("c");
@@ -91,6 +90,7 @@ let hit=[],mouse={x:-9999,y:-9999};
 let view={x:0,y:0,scale:1};
 let dragging=false,dragStart=null,viewStart=null;
 let pinchStart=null;
+let moved=false;
 
 function resize(){
   dpr=Math.min(2,devicePixelRatio||1);
@@ -273,7 +273,8 @@ function updateTooltip(e){
   } else tip.style.display="none";
 }
 
-canvas.addEventListener("wheel",e=>{dismissZoomCue();
+canvas.addEventListener("wheel",e=>{
+  dismissZoomCue();
   e.preventDefault();
   const before=screenToWorld(e.clientX,e.clientY);
   const factor=Math.exp(-e.deltaY*.0015);
@@ -282,9 +283,10 @@ canvas.addEventListener("wheel",e=>{dismissZoomCue();
   view.y=e.clientY-before.y*view.scale;
 },{passive:false});
 
-canvas.addEventListener("pointerdown",e=>{dismissZoomCue();
+canvas.addEventListener("pointerdown",e=>{
+  dismissZoomCue();
   canvas.setPointerCapture(e.pointerId);
-  dragging=true;canvas.classList.add("dragging");
+  dragging=true;moved=false;canvas.classList.add("dragging");
   dragStart={x:e.clientX,y:e.clientY};
   viewStart={x:view.x,y:view.y};
 });
@@ -292,12 +294,14 @@ canvas.addEventListener("pointerdown",e=>{dismissZoomCue();
 canvas.addEventListener("pointermove",e=>{
   updateTooltip(e);
   if(dragging&&dragStart){
-    view.x=viewStart.x+(e.clientX-dragStart.x);
-    view.y=viewStart.y+(e.clientY-dragStart.y);
+    const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;
+    if(Math.hypot(dx,dy)>3)moved=true;
+    view.x=viewStart.x+dx;
+    view.y=viewStart.y+dy;
   }
 });
 
-canvas.addEventListener("pointerup",e=>{
+canvas.addEventListener("pointerup",()=>{
   dragging=false;dragStart=null;viewStart=null;canvas.classList.remove("dragging");
 });
 
@@ -305,17 +309,17 @@ canvas.addEventListener("dblclick",e=>{
   e.preventDefault();resetView();
 });
 
-canvas.addEventListener("click",e=>{
-  if(Math.abs((e.clientX-(dragStart?.x||e.clientX)))<3) paused=!paused;
+canvas.addEventListener("click",()=>{
+  if(!moved)paused=!paused;
 });
 
-canvas.addEventListener("touchstart",e=>{if(e.touches.length===2)dismissZoomCue();
+canvas.addEventListener("touchstart",e=>{
+  dismissZoomCue();
   if(e.touches.length===2){
     const a=e.touches[0],b=e.touches[1];
     pinchStart={
       d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),
       scale:view.scale,
-      cx:(a.clientX+b.clientX)/2,cy:(a.clientY+b.clientY)/2,
       world:screenToWorld((a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2)
     };
   }
