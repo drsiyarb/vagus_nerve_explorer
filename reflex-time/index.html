@@ -28,53 +28,315 @@ input[type=range]{width:100%;accent-color:#f3f5f7}
 .hint{position:fixed;right:24px;bottom:20px;color:var(--muted);font-size:10px;z-index:3;text-align:right}
 .tooltip{position:fixed;z-index:8;display:none;max-width:280px;padding:9px 11px;border-radius:10px;background:rgba(8,10,15,.95);border:1px solid rgba(255,255,255,.13);font-size:11px;line-height:1.4;pointer-events:none}
 .tooltip b{display:block;margin-bottom:2px}.tooltip span{color:var(--muted)}
-@media(max-width:760px){.title{left:16px;top:14px;max-width:calc(100vw - 32px)}.controls{left:14px;right:14px;top:auto;bottom:14px;width:auto}.legend,.hint{display:none}h1{font-size:30px}}
+.zoom-cue{position:fixed;z-index:7;left:50%;top:50%;transform:translate(-50%,-50%);padding:12px 18px;border-radius:999px;background:rgba(8,10,15,.88);border:1px solid rgba(255,255,255,.16);color:#eef2f5;font-size:13px;letter-spacing:.01em;backdrop-filter:blur(10px);pointer-events:none;opacity:1;transition:opacity .5s ease}.zoom-cue.hidden{opacity:0}
+@media(max-width:760px){
+  .title{left:16px;top:14px;max-width:calc(100vw - 32px)}
+  .controls{left:14px;right:14px;top:auto;bottom:14px;width:auto}
+  .legend,.hint{display:none}
+  h1{font-size:30px}
+}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="title"><h1>Vagus Keeps the Time</h1><div class="sub">Vagal reflexes grouped by physiological system. Every loop shares one clock: the outer ring senses and the inner ring acts.</div></div>
-<div class="controls"><div class="control-head"><strong>SIMULATED TIME SPEED</strong><span id="speed-readout"></span></div><input id="speed" type="range" min="0" max="1000" value="330" aria-label="Simulated time speed"><div class="scale"><span>1 s / s</span><span>1 h / s</span></div><div class="clock"><span>shared physiological time</span><b id="clock-readout">00:00:00</b></div></div>
-<div class="legend"><div class="key"><span class="ring"></span><span>sensing component</span></div><div class="key"><span class="ring inner"></span><span>acting component</span></div></div>
-<div class="hint">Wheel or pinch to zoom · drag to pan · double-click to reset · click to pause</div><div class="tooltip" id="tip"></div>
+
+<div class="title">
+  <h1>Vagus Keeps the Time</h1>
+  <div class="sub">Vagal reflexes grouped by physiological system. Every loop shares one clock: the outer ring senses and the inner ring acts.</div>
+</div>
+
+<div class="controls">
+  <div class="control-head">
+    <strong>SIMULATED TIME SPEED</strong>
+    <span id="speed-readout"></span>
+  </div>
+  <input id="speed" type="range" min="0" max="1000" value="330" aria-label="Simulated time speed">
+  <div class="scale"><span>1 s / s</span><span>1 h / s</span></div>
+  <div class="clock"><span>shared physiological time</span><b id="clock-readout">00:00:00</b></div>
+</div>
+
+<div class="legend">
+  <div class="key"><span class="ring"></span><span>sensing component</span></div>
+  <div class="key"><span class="ring inner"></span><span>acting component</span></div>
+</div>
+
+<div class="hint">Wheel or pinch to zoom · drag to pan · double-click to reset · click to pause</div>
+<div class="tooltip" id="tip"></div>
+<div class="zoom-cue" id="zoom-cue">Pinch or scroll to zoom</div>
+
 <script>
 const SYSTEMS=[
-{name:"Cardiovascular",hue:24,reflexes:[["Baroreflex",2],["Bezold–Jarisch reflex",12],["Oculocardiac reflex",15],["Trigeminocardiac reflex",18]]},
-{name:"Respiratory",hue:66,reflexes:[["Respiratory sinus arrhythmia",4],["Pulmonary stretch reflex",5],["Chemoreflex",8],["Diving reflex",10]]},
-{name:"Protective aerodigestive",hue:5,reflexes:[["Laryngeal closure reflex",3],["Cough reflex",6],["Gag reflex",5],["Swallowing reflex",8],["Nausea–vomiting reflex",90]]},
-{name:"Gastrointestinal",hue:202,reflexes:[["Esophagogastric reflex",45],["Gastric accommodation",120],["Vagovagal gastric reflex",180],["Gastrocolic reflex",300],["Enterogastric reflex",420],["Ileogastric reflex",480]]},
-{name:"Metabolic",hue:256,reflexes:[["Pancreatic secretory reflex",600],["Biliary vagal reflex",720],["Satiety reflex",900]]},
-{name:"Immune",hue:312,reflexes:[["Inflammatory reflex",3600],["Splenic anti-inflammatory pathway",7200],["Sickness–recovery regulation",21600]]},
-{name:"Somatovisceral",hue:160,reflexes:[["Auricular vagal reflex",25]]}
+  {name:"Cardiovascular",hue:24,reflexes:[["Baroreflex",2],["Bezold–Jarisch reflex",12],["Oculocardiac reflex",15],["Trigeminocardiac reflex",18]]},
+  {name:"Respiratory",hue:66,reflexes:[["Respiratory sinus arrhythmia",4],["Pulmonary stretch reflex",5],["Chemoreflex",8],["Diving reflex",10]]},
+  {name:"Protective aerodigestive",hue:5,reflexes:[["Laryngeal closure reflex",3],["Cough reflex",6],["Gag reflex",5],["Swallowing reflex",8],["Nausea–vomiting reflex",90]]},
+  {name:"Gastrointestinal",hue:202,reflexes:[["Esophagogastric reflex",45],["Gastric accommodation",120],["Vagovagal gastric reflex",180],["Gastrocolic reflex",300],["Enterogastric reflex",420],["Ileogastric reflex",480]]},
+  {name:"Metabolic",hue:256,reflexes:[["Pancreatic secretory reflex",600],["Biliary vagal reflex",720],["Satiety reflex",900]]},
+  {name:"Immune",hue:312,reflexes:[["Inflammatory reflex",3600],["Splenic anti-inflammatory pathway",7200],["Sickness–recovery regulation",21600]]},
+  {name:"Somatovisceral",hue:160,reflexes:[["Auricular vagal reflex",25]]}
 ];
-const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),slider=document.getElementById("speed"),speedReadout=document.getElementById("speed-readout"),clockReadout=document.getElementById("clock-readout"),tip=document.getElementById("tip");
-let W=0,H=0,dpr=1,last=performance.now(),simTime=0,paused=false,hit=[],mouse={x:-9999,y:-9999},view={x:0,y:0,scale:1},dragging=false,dragStart=null,viewStart=null,pinchStart=null,moved=false;
-function resize(){dpr=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+"px";canvas.style.height=H+"px";ctx.setTransform(dpr,0,0,dpr,0,0);if(view.x===0&&view.y===0)resetView()}
+
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
+const slider=document.getElementById("speed");
+const speedReadout=document.getElementById("speed-readout");
+const clockReadout=document.getElementById("clock-readout");
+const tip=document.getElementById("tip");
+const zoomCue=document.getElementById("zoom-cue");
+let cueDismissed=false;
+function dismissZoomCue(){if(cueDismissed)return;cueDismissed=true;zoomCue.classList.add("hidden");setTimeout(()=>zoomCue.remove(),600)}
+setTimeout(dismissZoomCue,4500);
+
+let W=0,H=0,dpr=1,last=performance.now(),simTime=0,paused=false;
+let hit=[],mouse={x:-9999,y:-9999};
+let view={x:0,y:0,scale:1};
+let dragging=false,dragStart=null,viewStart=null;
+let pinchStart=null;
+
+function resize(){
+  dpr=Math.min(2,devicePixelRatio||1);
+  W=innerWidth;H=innerHeight;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(view.x===0&&view.y===0) resetView();
+}
 addEventListener("resize",resize);
-function resetView(){view.scale=Math.max(.62,Math.min(1.05,Math.min(W/1450,H/900)));view.x=W/2;view.y=H/2+35}
-function worldToScreen(x,y){return{x:view.x+x*view.scale,y:view.y+y*view.scale}}
-function screenToWorld(x,y){return{x:(x-view.x)/view.scale,y:(y-view.y)/view.scale}}
-function speedValue(){const u=+slider.value/1000;return Math.pow(3600,u)}
-function fmtSpeed(v){if(v<60)return(v<10?v.toFixed(1):Math.round(v))+" s / s";if(v<3600)return(v/60<10?(v/60).toFixed(1):Math.round(v/60))+" min / s";return"1 h / s"}
-function fmtClock(s){s=((s%86400)+86400)%86400;const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),q=Math.floor(s%60);return[h,m,q].map(v=>String(v).padStart(2,"0")).join(":")}
-function periodLabel(s){if(s<60)return s+" s";if(s<3600)return Math.round(s/60)+" min";return Math.round(s/3600)+" h"}
-slider.addEventListener("input",()=>speedReadout.textContent=fmtSpeed(speedValue()));speedReadout.textContent=fmtSpeed(speedValue());
-function systemCenters(){const rx=520,ry=305;return SYSTEMS.map((s,i)=>{const a=-Math.PI/2+i*Math.PI*2/SYSTEMS.length;return{x:Math.cos(a)*rx,y:Math.sin(a)*ry,a}})}
-function drawArc(x,y,r,phase,color,width,alpha){ctx.beginPath();ctx.arc(x,y,r,phase,phase+Math.PI*1.55);ctx.strokeStyle=color.replace("ALPHA",alpha);ctx.lineWidth=width;ctx.lineCap="round";ctx.stroke();const a=phase+Math.PI*1.55;ctx.beginPath();ctx.arc(x+Math.cos(a)*r,y+Math.sin(a)*r,width*.95,0,Math.PI*2);ctx.fillStyle=color.replace("ALPHA",Math.min(1,alpha+.15));ctx.fill()}
-function roundedLabel(text,x,y,font,fg,bg,padX=5,padY=3){ctx.font=font;const m=ctx.measureText(text),h=parseInt(font,10)||11,w=m.width+padX*2,hh=h+padY*2;ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(x-w/2,y-hh/2,w,hh,5);ctx.fill();ctx.fillStyle=fg;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(text,x,y+.5)}
-function wrapName(name,maxChars=18){const words=name.split(" ");if(name.length<=maxChars)return[name];let best=["",""],bestDiff=1e9;for(let i=1;i<words.length;i++){const a=words.slice(0,i).join(" "),b=words.slice(i).join(" "),d=Math.abs(a.length-b.length);if(Math.max(a.length,b.length)<=maxChars+6&&d<bestDiff){best=[a,b];bestDiff=d}}return best[0]?[best[0],best[1]]:[name]}
-function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!paused)simTime+=dt*speedValue();speedReadout.textContent=fmtSpeed(speedValue());clockReadout.textContent=fmtClock(simTime);ctx.clearRect(0,0,W,H);hit=[];ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.scale,view.scale);const centers=systemCenters();centers.forEach((c,si)=>{const sys=SYSTEMS[si],n=sys.reflexes.length,clusterR=Math.max(92,72+n*13);ctx.beginPath();ctx.arc(c.x,c.y,clusterR,0,Math.PI*2);ctx.strokeStyle=`hsla(${sys.hue},55%,62%,.18)`;ctx.lineWidth=1.2/view.scale;ctx.stroke();roundedLabel(sys.name.toUpperCase(),c.x,c.y-clusterR-30,"600 12px ui-sans-serif,system-ui,sans-serif",`hsla(${sys.hue},75%,82%,.96)`,"rgba(8,10,15,.88)",7,4);sys.reflexes.forEach((rf,j)=>{const a=-Math.PI/2+j*Math.PI*2/n,rr=n===1?0:clusterR*.62,x=c.x+Math.cos(a)*rr,y=c.y+Math.sin(a)*rr,name=rf[0],period=rf[1],sensePhase=(simTime%period)/period*Math.PI*2-Math.PI/2,lag=Math.min(period*.22,Math.max(.25,period*.08)),actPhase=(((simTime-lag)%period)+period)%period/period*Math.PI*2-Math.PI/2,base=11+Math.min(6,Math.log10(period+1)*1.8),col=`hsla(${sys.hue},78%,72%,ALPHA)`;drawArc(x,y,base+5,sensePhase,col,2/view.scale,.8);drawArc(x,y,base-2,actPhase,col,1.5/view.scale,.5);const lines=wrapName(name,17),radialOffset=base+22,labelAngle=a,lx=x+Math.cos(labelAngle)*radialOffset,ly=y+Math.sin(labelAngle)*radialOffset,lineStep=11;lines.forEach((line,idx)=>roundedLabel(line,lx,ly+(idx-(lines.length-1)/2)*lineStep,"9.5px ui-sans-serif,system-ui,sans-serif","rgba(241,245,248,.94)","rgba(8,10,15,.8)",4,2));const p=worldToScreen(x,y);hit.push({x:p.x,y:p.y,r:(base+11)*view.scale,name,period,system:sys.name})})});ctx.restore();requestAnimationFrame(frame)}
-function updateTooltip(e){mouse={x:e.clientX,y:e.clientY};const found=hit.find(o=>Math.hypot(mouse.x-o.x,mouse.y-o.y)<=o.r+8);if(found){tip.style.display="block";tip.style.left=Math.min(W-300,e.clientX+14)+"px";tip.style.top=Math.min(H-95,e.clientY+14)+"px";tip.innerHTML="<b>"+found.name+"</b><span>"+found.system+" · dominant period "+periodLabel(found.period)+"</span>"}else tip.style.display="none"}
-canvas.addEventListener("wheel",e=>{e.preventDefault();const before=screenToWorld(e.clientX,e.clientY),factor=Math.exp(-e.deltaY*.0015);view.scale=Math.max(.35,Math.min(4.5,view.scale*factor));view.x=e.clientX-before.x*view.scale;view.y=e.clientY-before.y*view.scale},{passive:false});
-canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);dragging=true;moved=false;canvas.classList.add("dragging");dragStart={x:e.clientX,y:e.clientY};viewStart={x:view.x,y:view.y}});
-canvas.addEventListener("pointermove",e=>{updateTooltip(e);if(dragging&&dragStart){const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;if(Math.hypot(dx,dy)>3)moved=true;view.x=viewStart.x+dx;view.y=viewStart.y+dy}});
-canvas.addEventListener("pointerup",()=>{dragging=false;dragStart=null;viewStart=null;canvas.classList.remove("dragging")});
-canvas.addEventListener("dblclick",e=>{e.preventDefault();resetView()});
-canvas.addEventListener("click",()=>{if(!moved)paused=!paused});
-canvas.addEventListener("touchstart",e=>{if(e.touches.length===2){const a=e.touches[0],b=e.touches[1];pinchStart={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),scale:view.scale,world:screenToWorld((a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2)}}},{passive:false});
-canvas.addEventListener("touchmove",e=>{if(e.touches.length===2&&pinchStart){e.preventDefault();const a=e.touches[0],b=e.touches[1],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);view.scale=Math.max(.35,Math.min(4.5,pinchStart.scale*d/pinchStart.d));const cx=(a.clientX+b.clientX)/2,cy=(a.clientY+b.clientY)/2;view.x=cx-pinchStart.world.x*view.scale;view.y=cy-pinchStart.world.y*view.scale}},{passive:false});
+
+function resetView(){
+  view.scale=Math.max(.62,Math.min(1.05,Math.min(W/1450,H/900)));
+  view.x=W/2;
+  view.y=H/2+35;
+}
+
+function worldToScreen(x,y){return {x:view.x+x*view.scale,y:view.y+y*view.scale}}
+function screenToWorld(x,y){return {x:(x-view.x)/view.scale,y:(y-view.y)/view.scale}}
+
+function speedValue(){
+  const u=+slider.value/1000;
+  return Math.pow(3600,u);
+}
+function fmtSpeed(v){
+  if(v<60) return (v<10?v.toFixed(1):Math.round(v))+" s / s";
+  if(v<3600) return (v/60<10?(v/60).toFixed(1):Math.round(v/60))+" min / s";
+  return "1 h / s";
+}
+function fmtClock(s){
+  s=((s%86400)+86400)%86400;
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),q=Math.floor(s%60);
+  return [h,m,q].map(v=>String(v).padStart(2,"0")).join(":");
+}
+function periodLabel(s){
+  if(s<60)return s+" s";
+  if(s<3600)return Math.round(s/60)+" min";
+  return Math.round(s/3600)+" h";
+}
+
+slider.addEventListener("input",()=>speedReadout.textContent=fmtSpeed(speedValue()));
+speedReadout.textContent=fmtSpeed(speedValue());
+
+function systemCenters(){
+  const rx=520,ry=305;
+  return SYSTEMS.map((s,i)=>{
+    const a=-Math.PI/2+i*Math.PI*2/SYSTEMS.length;
+    return {x:Math.cos(a)*rx,y:Math.sin(a)*ry,a};
+  });
+}
+
+function drawArc(x,y,r,phase,color,width,alpha){
+  ctx.beginPath();
+  ctx.arc(x,y,r,phase,phase+Math.PI*1.55);
+  ctx.strokeStyle=color.replace("ALPHA",alpha);
+  ctx.lineWidth=width;
+  ctx.lineCap="round";
+  ctx.stroke();
+  const a=phase+Math.PI*1.55;
+  ctx.beginPath();
+  ctx.arc(x+Math.cos(a)*r,y+Math.sin(a)*r,width*.95,0,Math.PI*2);
+  ctx.fillStyle=color.replace("ALPHA",Math.min(1,alpha+.15));
+  ctx.fill();
+}
+
+function roundedLabel(text,x,y,font,fg,bg,padX=5,padY=3){
+  ctx.font=font;
+  const m=ctx.measureText(text);
+  const h=parseInt(font,10)||11;
+  const w=m.width+padX*2;
+  const hh=h+padY*2;
+  ctx.fillStyle=bg;
+  ctx.beginPath();
+  ctx.roundRect(x-w/2,y-hh/2,w,hh,5);
+  ctx.fill();
+  ctx.fillStyle=fg;
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(text,x,y+.5);
+}
+
+function wrapName(name,maxChars=18){
+  const words=name.split(" ");
+  if(name.length<=maxChars)return [name];
+  let best=["",""],bestDiff=1e9;
+  for(let i=1;i<words.length;i++){
+    const a=words.slice(0,i).join(" "),b=words.slice(i).join(" ");
+    const d=Math.abs(a.length-b.length);
+    if(Math.max(a.length,b.length)<=maxChars+6 && d<bestDiff){best=[a,b];bestDiff=d}
+  }
+  return best[0]?[best[0],best[1]]:[name];
+}
+
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(!paused)simTime+=dt*speedValue();
+  speedReadout.textContent=fmtSpeed(speedValue());
+  clockReadout.textContent=fmtClock(simTime);
+
+  ctx.clearRect(0,0,W,H);
+  hit=[];
+
+  ctx.save();
+  ctx.translate(view.x,view.y);
+  ctx.scale(view.scale,view.scale);
+
+  const centers=systemCenters();
+
+  centers.forEach((c,si)=>{
+    const sys=SYSTEMS[si];
+    const n=sys.reflexes.length;
+    const clusterR=Math.max(92,72+n*13);
+
+    ctx.beginPath();
+    ctx.arc(c.x,c.y,clusterR,0,Math.PI*2);
+    ctx.strokeStyle=`hsla(${sys.hue},55%,62%,.18)`;
+    ctx.lineWidth=1.2/view.scale;
+    ctx.stroke();
+
+    roundedLabel(
+      sys.name.toUpperCase(),
+      c.x,c.y-clusterR-30,
+      "600 12px ui-sans-serif,system-ui,sans-serif",
+      `hsla(${sys.hue},75%,82%,.96)`,
+      "rgba(8,10,15,.88)",
+      7,4
+    );
+
+    sys.reflexes.forEach((rf,j)=>{
+      const a=-Math.PI/2+j*Math.PI*2/n;
+      const rr=n===1?0:clusterR*.62;
+      const x=c.x+Math.cos(a)*rr;
+      const y=c.y+Math.sin(a)*rr;
+      const name=rf[0],period=rf[1];
+
+      const sensePhase=(simTime%period)/period*Math.PI*2-Math.PI/2;
+      const lag=Math.min(period*.22,Math.max(.25,period*.08));
+      const actPhase=(((simTime-lag)%period)+period)%period/period*Math.PI*2-Math.PI/2;
+
+      const base=11+Math.min(6,Math.log10(period+1)*1.8);
+      const col=`hsla(${sys.hue},78%,72%,ALPHA)`;
+
+      drawArc(x,y,base+5,sensePhase,col,2.0/view.scale,.8);
+      drawArc(x,y,base-2,actPhase,col,1.5/view.scale,.5);
+
+      const lines=wrapName(name,17);
+      const radialOffset=base+22;
+      const labelAngle=a;
+      const lx=x+Math.cos(labelAngle)*radialOffset;
+      const ly=y+Math.sin(labelAngle)*radialOffset;
+      const lineStep=11;
+      lines.forEach((line,idx)=>{
+        roundedLabel(
+          line,
+          lx,ly+(idx-(lines.length-1)/2)*lineStep,
+          "9.5px ui-sans-serif,system-ui,sans-serif",
+          "rgba(241,245,248,.94)",
+          "rgba(8,10,15,.8)",
+          4,2
+        );
+      });
+
+      const p=worldToScreen(x,y);
+      hit.push({x:p.x,y:p.y,r:(base+11)*view.scale,name,period,system:sys.name});
+    });
+  });
+
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+
+function updateTooltip(e){
+  mouse={x:e.clientX,y:e.clientY};
+  const found=hit.find(o=>Math.hypot(mouse.x-o.x,mouse.y-o.y)<=o.r+8);
+  if(found){
+    tip.style.display="block";
+    tip.style.left=Math.min(W-300,e.clientX+14)+"px";
+    tip.style.top=Math.min(H-95,e.clientY+14)+"px";
+    tip.innerHTML="<b>"+found.name+"</b><span>"+found.system+" · dominant period "+periodLabel(found.period)+"</span>";
+  } else tip.style.display="none";
+}
+
+canvas.addEventListener("wheel",e=>{dismissZoomCue();
+  e.preventDefault();
+  const before=screenToWorld(e.clientX,e.clientY);
+  const factor=Math.exp(-e.deltaY*.0015);
+  view.scale=Math.max(.35,Math.min(4.5,view.scale*factor));
+  view.x=e.clientX-before.x*view.scale;
+  view.y=e.clientY-before.y*view.scale;
+},{passive:false});
+
+canvas.addEventListener("pointerdown",e=>{dismissZoomCue();
+  canvas.setPointerCapture(e.pointerId);
+  dragging=true;canvas.classList.add("dragging");
+  dragStart={x:e.clientX,y:e.clientY};
+  viewStart={x:view.x,y:view.y};
+});
+
+canvas.addEventListener("pointermove",e=>{
+  updateTooltip(e);
+  if(dragging&&dragStart){
+    view.x=viewStart.x+(e.clientX-dragStart.x);
+    view.y=viewStart.y+(e.clientY-dragStart.y);
+  }
+});
+
+canvas.addEventListener("pointerup",e=>{
+  dragging=false;dragStart=null;viewStart=null;canvas.classList.remove("dragging");
+});
+
+canvas.addEventListener("dblclick",e=>{
+  e.preventDefault();resetView();
+});
+
+canvas.addEventListener("click",e=>{
+  if(Math.abs((e.clientX-(dragStart?.x||e.clientX)))<3) paused=!paused;
+});
+
+canvas.addEventListener("touchstart",e=>{if(e.touches.length===2)dismissZoomCue();
+  if(e.touches.length===2){
+    const a=e.touches[0],b=e.touches[1];
+    pinchStart={
+      d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),
+      scale:view.scale,
+      cx:(a.clientX+b.clientX)/2,cy:(a.clientY+b.clientY)/2,
+      world:screenToWorld((a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2)
+    };
+  }
+},{passive:false});
+
+canvas.addEventListener("touchmove",e=>{
+  if(e.touches.length===2&&pinchStart){
+    e.preventDefault();
+    const a=e.touches[0],b=e.touches[1];
+    const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+    view.scale=Math.max(.35,Math.min(4.5,pinchStart.scale*d/pinchStart.d));
+    const cx=(a.clientX+b.clientX)/2,cy=(a.clientY+b.clientY)/2;
+    view.x=cx-pinchStart.world.x*view.scale;
+    view.y=cy-pinchStart.world.y*view.scale;
+  }
+},{passive:false});
+
 canvas.addEventListener("touchend",()=>{pinchStart=null});
-resize();requestAnimationFrame(frame);
+
+resize();
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
