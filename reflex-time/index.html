@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Nerve That Keeps Time</title>
+<style>
+  :root { --bg:#090b10; --fg:#f2f5f7; --muted:#9aa5b1; --panel:rgba(255,255,255,.04); }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; overflow:hidden; }
+  canvas { position:fixed; inset:0; width:100%; height:100%; }
+  .title { position:fixed; left:28px; top:22px; z-index:2; max-width:min(560px,74vw); }
+  h1 { font-weight:500; letter-spacing:-.03em; margin:0 0 6px; font-size:clamp(26px,4vw,58px); }
+  .sub { color:var(--muted); font-size:clamp(12px,1.3vw,16px); line-height:1.45; }
+  .legend { position:fixed; right:24px; top:24px; z-index:2; background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:14px 16px; backdrop-filter:blur(12px); width:min(250px,38vw); }
+  .legend div { display:flex; justify-content:space-between; gap:14px; margin:5px 0; color:var(--muted); font-size:12px; }
+  .legend strong { color:var(--fg); font-weight:500; }
+  .footer { position:fixed; left:28px; bottom:20px; color:var(--muted); z-index:2; font-size:12px; }
+  .footer b { color:var(--fg); font-weight:500; }
+  @media (max-width:700px){ .legend{top:auto;bottom:18px;right:16px;left:16px;width:auto}.footer{display:none}.title{left:18px;top:16px;max-width:calc(100vw - 36px)} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="title">
+  <h1>The Nerve That Keeps Time</h1>
+  <div class="sub">Twenty-six vagal reflexes rendered as self-returning loops. Fast loops stabilize the next beat and breath; slow loops reshape digestion, inflammation, and recovery.</div>
+</div>
+<div class="legend">
+  <div><strong>inner orbit</strong><span>neural signaling</span></div>
+  <div><strong>middle orbit</strong><span>organ response</span></div>
+  <div><strong>outer orbit</strong><span>return to equilibrium</span></div>
+  <div><strong>rotation speed</strong><span>dominant timescale</span></div>
+</div>
+<div class="footer"><b>Move</b> to disturb the field · <b>Click</b> to pause</div>
+<script>
+const DATA=[{"name":"Baroreflex","seconds":2,"category":"Cardiovascular","u":0,"cat":1},{"name":"Respiratory sinus arrhythmia","seconds":4,"category":"Cardiorespiratory","u":.0746338629,"cat":2},{"name":"Pulmonary stretch reflex","seconds":5,"category":"Respiratory","u":.0986606002,"cat":3},{"name":"Chemoreflex","seconds":8,"category":"Cardiorespiratory","u":.1492677258,"cat":2},{"name":"Laryngeal closure reflex","seconds":3,"category":"Protective","u":.0436580111,"cat":0},{"name":"Cough reflex","seconds":6,"category":"Protective","u":.118291874,"cat":0},{"name":"Gag reflex","seconds":5,"category":"Protective","u":.0986606002,"cat":0},{"name":"Swallowing reflex","seconds":8,"category":"Protective","u":.1492677258,"cat":0},{"name":"Diving reflex","seconds":10,"category":"Cardiorespiratory","u":.1732944631,"cat":2},{"name":"Bezold–Jarisch reflex","seconds":12,"category":"Cardiovascular","u":.1929257369,"cat":1},{"name":"Oculocardiac reflex","seconds":15,"category":"Cardiovascular","u":.2169524742,"cat":1},{"name":"Trigeminocardiac reflex","seconds":18,"category":"Cardiovascular","u":.236583748,"cat":1},{"name":"Auricular vagal reflex","seconds":25,"category":"Somatovisceral","u":.2719550634,"cat":4},{"name":"Esophagogastric reflex","seconds":45,"category":"Gastrointestinal","u":.3352443482,"cat":5},{"name":"Gastric accommodation","seconds":120,"category":"Gastrointestinal","u":.440854063,"cat":5},{"name":"Vagovagal gastric reflex","seconds":180,"category":"Gastrointestinal","u":.4845120741,"cat":5},{"name":"Gastrocolic reflex","seconds":300,"category":"Gastrointestinal","u":.5395146632,"cat":5},{"name":"Enterogastric reflex","seconds":420,"category":"Gastrointestinal","u":.5757439425,"cat":5},{"name":"Ileogastric reflex","seconds":480,"category":"Gastrointestinal","u":.5901217888,"cat":5},{"name":"Pancreatic secretory reflex","seconds":600,"category":"Metabolic","u":.6141485261,"cat":6},{"name":"Biliary vagal reflex","seconds":720,"category":"Metabolic","u":.6337797999,"cat":6},{"name":"Satiety reflex","seconds":900,"category":"Metabolic","u":.6578065372,"cat":6},{"name":"Nausea–vomiting reflex","seconds":90,"category":"Protective","u":.4098782112,"cat":0},{"name":"Inflammatory reflex","seconds":3600,"category":"Immune","u":.8070742631,"cat":7},{"name":"Splenic anti-inflammatory pathway","seconds":7200,"category":"Immune","u":.881708126,"cat":7},{"name":"Sickness–recovery regulation","seconds":21600,"category":"Immune","u":1,"cat":7}];
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');let W=0,H=0,dpr=1,paused=false,mouse={x:-9999,y:-9999};
+function resize(){dpr=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});addEventListener('click',()=>paused=!paused);
+const categoryHue=[8,28,52,85,165,205,255,310],nodes=DATA.map((d,i)=>({...d,phase:i*2.3999632297,ring:i%3,wobble:.6+((i*37)%10)/10}));
+function layout(n,i){const mx=Math.max(90,W*.08),my=Math.max(120,H*.16),uw=W-mx*2,uh=H-my*2,band=Math.floor(i/9),k=i%9;return[mx+uw*(k/8),my+uh*(band/2)]}
+let last=performance.now(),T=0;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!paused)T+=dt;ctx.clearRect(0,0,W,H);ctx.save();ctx.strokeStyle='rgba(255,255,255,.035)';ctx.lineWidth=1;for(let b=0;b<3;b++){const y=Math.max(120,H*.16)+(H-2*Math.max(120,H*.16))*(b/2);ctx.beginPath();ctx.moveTo(40,y);ctx.lineTo(W-40,y);ctx.stroke()}ctx.restore();nodes.forEach((n,i)=>{const[bx,by]=layout(n,i),dx=mouse.x-bx,dy=mouse.y-by,dist=Math.hypot(dx,dy),repel=Math.max(0,1-dist/180),x=bx-dx*repel*.12,y=by-dy*repel*.12,base=13+18*n.u,hue=categoryHue[n.cat],speed=.16+1.35*Math.pow(1-n.u,1.8),a=T*speed+n.phase;for(let r=0;r<3;r++){const rr=base+r*4.5,lag=r*(.45+1.8*n.u),start=a-lag;ctx.beginPath();ctx.strokeStyle=`hsla(${hue},75%,${70-r*6}%,${.68-r*.12})`;ctx.lineWidth=r===0?1.7:1;ctx.arc(x,y,rr,start,start+Math.PI*1.5);ctx.stroke();const px=x+Math.cos(start+Math.PI*1.5)*rr,py=y+Math.sin(start+Math.PI*1.5)*rr;ctx.beginPath();ctx.fillStyle=`hsla(${hue},90%,78%,${.85-r*.14})`;ctx.arc(px,py,1.6-r*.25,0,Math.PI*2);ctx.fill()}ctx.fillStyle='rgba(242,245,247,.88)';ctx.font='11px ui-sans-serif,system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(n.name,x,y+base+20);ctx.fillStyle='rgba(154,165,177,.72)';ctx.font='9px ui-sans-serif,system-ui,sans-serif';const label=n.seconds<60?`${n.seconds} s`:n.seconds<3600?`${Math.round(n.seconds/60)} min`:`${Math.round(n.seconds/3600)} h`;ctx.fillText(label,x,y+base+32)});requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script>
+</body>
+</html>
