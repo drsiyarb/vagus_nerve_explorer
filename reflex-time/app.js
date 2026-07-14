@@ -36,9 +36,9 @@ addEventListener("resize",resize);
 function target(i){
   if(i===SYSTEMS.length)return{s:Math.max(.52,Math.min(.9,Math.min(W/1200,H/760))),x:W/2,y:H/2+40};
   const r=radius(SYSTEMS[i].r.length),mobile=W<760;
-  const aw=mobile?W-18:Math.max(520,W-500),ah=mobile?H*.69:H-150;
-  const z=Math.max(mobile?1.02:.8,Math.min(mobile?2.65:2.25,Math.min(aw/(r*2.35),ah/(r*2.35))));
-  return{s:z,x:mobile?W/2:Math.max(330,W*.42),y:mobile?H*.41:H*.58};
+  const aw=mobile?W-18:Math.max(520,W-500),ah=mobile?H*.64:H-150;
+  const z=Math.max(mobile?1.0:.8,Math.min(mobile?2.55:2.25,Math.min(aw/(r*2.35),ah/(r*2.35))));
+  return{s:z,x:mobile?W/2:Math.max(330,W*.42),y:mobile?H*.46:H*.58};
 }
 function recommended(i){
   if(i===SYSTEMS.length)return 30;
@@ -93,9 +93,9 @@ function layoutFor(n,cr,full){
   return{rr:cr*.47,orbit:cr*.145,label:cr*.11};
 }
 function drawSystem(s,i,ox=0,oy=0,scale=1,full=false){
-  const n=s.r.length,cr=radius(n)*scale,L=layoutFor(n,cr,full);
+  const n=s.r.length,cr=radius(n)*scale,L=layoutFor(n,cr,full),mobile=W<760;
   ctx.beginPath();ctx.arc(ox,oy,cr,0,7);ctx.strokeStyle=`hsla(${s.h},55%,62%,.12)`;ctx.lineWidth=1/view.s;ctx.stroke();
-  label(s.name.toUpperCase(),ox,oy-cr-38,full?16:20,650,.92);
+  if(full||!mobile)label(s.name.toUpperCase(),ox,oy-cr-38,full?16:20,650,.92);
   s.r.forEach((rf,j)=>{
     const a=-Math.PI/2+j*Math.PI*2/n,x=ox+Math.cos(a)*L.rr,y=oy+Math.sin(a)*L.rr,p=rf[1];
     const o=full?26+Math.min(12,Math.log10(p+1)*3):L.orbit;
