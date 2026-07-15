@@ -41,7 +41,7 @@
   </div>
 </div>
 
-<div class="hint">Swipe or use arrows to switch · pinch or scroll to zoom · drag to pan · click to pause</div>
+<div class="hint">Use arrows to switch · pinch or scroll to zoom · drag to pan · click to pause</div>
 <div class="tip" id="tip"></div>
 
 <div class="tour" id="tour">
@@ -50,6 +50,25 @@
   <div class="row"><span class="count" id="tc"></span><button id="tn">Next</button></div>
 </div>
 
+<script>
+/* iOS Safari changes only the viewport height when its browser chrome appears or disappears.
+   The visualization's resize handler recenters the active system, so ignore those height-only
+   resize events while still allowing real width/orientation changes through. */
+(() => {
+  const nativeAdd = window.addEventListener.bind(window);
+  let lastWidth = window.innerWidth;
+  window.addEventListener = function(type, listener, options) {
+    if (type !== "resize") return nativeAdd(type, listener, options);
+    return nativeAdd(type, function(event) {
+      const widthChanged = Math.abs(window.innerWidth - lastWidth) > 60;
+      if (widthChanged) {
+        lastWidth = window.innerWidth;
+        listener.call(this, event);
+      }
+    }, options);
+  };
+})();
+</script>
 <script src="app.js"></script>
 </body>
 </html>
